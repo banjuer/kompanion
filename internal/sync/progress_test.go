@@ -7,8 +7,8 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-	"github.com/vanadium23/kompanion/internal/entity"
-	"github.com/vanadium23/kompanion/internal/sync"
+	"github.com/banjuer/kompanion/internal/entity"
+	"github.com/banjuer/kompanion/internal/sync"
 )
 
 type test struct {

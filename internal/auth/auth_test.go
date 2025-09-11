@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/vanadium23/kompanion/internal/auth"
+	"github.com/banjuer/kompanion/internal/auth"
 )
 
 func TestAuthServiceUserOnInit(t *testing.T) {

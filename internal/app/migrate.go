@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/vanadium23/kompanion"
+	"github.com/banjuer/kompanion"
 
 	// migrate tools
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"

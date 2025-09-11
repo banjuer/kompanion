@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/vanadium23/kompanion/internal/auth"
-	"github.com/vanadium23/kompanion/pkg/logger"
+	"github.com/banjuer/kompanion/internal/auth"
+	"github.com/banjuer/kompanion/pkg/logger"
 )
 
 type userRoutes struct {

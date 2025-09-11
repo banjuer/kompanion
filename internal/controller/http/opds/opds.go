@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/vanadium23/kompanion/internal/entity"
-	"github.com/vanadium23/kompanion/internal/library"
+	"github.com/banjuer/kompanion/internal/entity"
+	"github.com/banjuer/kompanion/internal/library"
 )
 
 const (

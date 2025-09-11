@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/vanadium23/kompanion/pkg/postgres"
+	"github.com/banjuer/kompanion/pkg/postgres"
 )
 
 type UserDatabaseRepo struct {

@@ -64,7 +64,7 @@ func TestWebFooterVersion(t *testing.T) {
 		Description("Footer Version"),
 		Get(basePath+"/"),
 		Expect().Status().Equal(http.StatusOK),
-		Expect().Body().String().Contains("github.com/vanadium23/kompanion"),
+		Expect().Body().String().Contains("github.com/banjuer/kompanion"),
 		Expect().Body().String().Contains("integration"),
 	)
 }
@@ -389,7 +389,7 @@ func TestWebStats(t *testing.T) {
 	)
 
 	// regress for uploading same file
-	// https://github.com/vanadium23/kompanion/issues/22
+	// https://github.com/banjuer/kompanion/issues/22
 	Test(t,
 		Description("Kompanion Upload Stats via WebDAV"),
 		Put(basePath+"/webdav/statistics.sqlite3"),

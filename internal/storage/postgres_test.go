@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/vanadium23/kompanion/internal/storage"
-	"github.com/vanadium23/kompanion/pkg/postgres"
+	"github.com/banjuer/kompanion/internal/storage"
+	"github.com/banjuer/kompanion/pkg/postgres"
 )
 
 func TestPostgresStorage(t *testing.T) {

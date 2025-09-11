@@ -3,7 +3,7 @@ package sync
 import (
 	"context"
 
-	"github.com/vanadium23/kompanion/internal/entity"
+	"github.com/banjuer/kompanion/internal/entity"
 )
 
 //go:generate mockgen -source=interfaces.go -destination=./mocks_test.go -package=sync_test

@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/vanadium23/kompanion/internal/auth"
-	"github.com/vanadium23/kompanion/internal/library"
-	"github.com/vanadium23/kompanion/internal/sync"
-	"github.com/vanadium23/kompanion/pkg/logger"
+	"github.com/banjuer/kompanion/internal/auth"
+	"github.com/banjuer/kompanion/internal/library"
+	"github.com/banjuer/kompanion/internal/sync"
+	"github.com/banjuer/kompanion/pkg/logger"
 )
 
 type OPDSRouter struct {

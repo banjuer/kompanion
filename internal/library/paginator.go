@@ -1,6 +1,6 @@
 package library
 
-import "github.com/vanadium23/kompanion/internal/entity"
+import "github.com/banjuer/kompanion/internal/entity"
 
 type PaginatedBookList struct {
 	Books []entity.Book

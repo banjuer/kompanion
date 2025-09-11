@@ -1,4 +1,4 @@
-module github.com/vanadium23/kompanion
+module github.com/banjuer/kompanion
 
 go 1.22.0
 

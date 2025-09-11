@@ -9,6 +9,15 @@
         <button style="flex-grow: 1;">Upload</button>
     </form>
 </div>
+
+<div style="margin: 1rem 0;">
+    <form method="get" action="/books" class="grid">
+        <div style="flex-grow: 1;">
+            <input type="text" name="q" placeholder="query books..." value="{{ .query }}" style="width: 100%; padding: 0.5rem;">
+        </div>
+        <button style="margin-left: 0.5rem;">Query</button>
+    </form>
+</div>
 <section>
     {{ range .books }}
     <!-- Another example -->

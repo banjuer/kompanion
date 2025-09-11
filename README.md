@@ -31,7 +31,7 @@ Features, that can buy you in:
 
 ### Pre-compiled binary
 
-1. download archive with latest binary from [Releases page](https://github.com/vanadium23/kompanion/releases)
+1. download archive with latest binary from [Releases page](https://github.com/banjuer/kompanion/releases)
 2. run `KOMPANION_PG_URL=postgres://... -e KOMPANION_AUTH_PASSWORD=password -e KOMPANION_AUTH_USERNAME=username ./kompanion`, it will start server with provided postgresql and admin credentials
 
 ### Configuration

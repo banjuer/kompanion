@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/vanadium23/kompanion/config"
-	"github.com/vanadium23/kompanion/internal/app"
+	"github.com/banjuer/kompanion/config"
+	"github.com/banjuer/kompanion/internal/app"
 )
 
 var Version = "dev"

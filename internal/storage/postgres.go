@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/vanadium23/kompanion/pkg/postgres"
-	"github.com/vanadium23/kompanion/pkg/utils"
+	"github.com/banjuer/kompanion/pkg/postgres"
+	"github.com/banjuer/kompanion/pkg/utils"
 )
 
 type PostgresStorage struct {

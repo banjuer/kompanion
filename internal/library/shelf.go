@@ -9,19 +9,21 @@ import (
 
 	"github.com/moroz/uuidv7-go"
 
-	"github.com/vanadium23/kompanion/internal/entity"
-	"github.com/vanadium23/kompanion/internal/storage"
-	"github.com/vanadium23/kompanion/pkg/logger"
-	"github.com/vanadium23/kompanion/pkg/metadata"
-	"github.com/vanadium23/kompanion/pkg/utils"
+	"github.com/banjuer/kompanion/internal/entity"
+	"github.com/banjuer/kompanion/internal/storage"
+	"github.com/banjuer/kompanion/pkg/logger"
+	"github.com/banjuer/kompanion/pkg/metadata"
+	"github.com/banjuer/kompanion/pkg/utils"
 )
 
+// BookShelf 提供书籍管理操作
 type BookShelf struct {
 	storage storage.Storage
 	repo    BookRepo
 	logger  logger.Interface
 }
 
+// NewBookShelf 创建BookShelf实例
 func NewBookShelf(storage storage.Storage, repo BookRepo, l logger.Interface) *BookShelf {
 	return &BookShelf{
 		storage: storage,
@@ -89,6 +91,7 @@ func (uc *BookShelf) StoreBook(ctx context.Context, tempFile *os.File, uploadedF
 	return book, nil
 }
 
+// ListBooks -. 从数据库获取书籍列表
 func (uc *BookShelf) ListBooks(ctx context.Context,
 	sortBy, sortOrder string,
 	page, perPage int) (PaginatedBookList, error) {
@@ -112,6 +115,31 @@ func (uc *BookShelf) ListBooks(ctx context.Context,
 	return pbl, nil
 }
 
+// SearchBooks -. 搜索书籍
+func (uc *BookShelf) SearchBooks(ctx context.Context,
+	query string,
+	sortBy, sortOrder string,
+	page, perPage int) (PaginatedBookList, error) {
+	books, err := uc.repo.Search(ctx, query, sortBy, sortOrder, page, perPage)
+	if err != nil {
+		return PaginatedBookList{}, fmt.Errorf("BookShelf - SearchBooks - s.repo.Search: %w", err)
+	}
+
+	totalCount, err := uc.repo.CountSearch(ctx, query)
+	if err != nil {
+		return PaginatedBookList{}, fmt.Errorf("BookShelf - SearchBooks - s.repo.CountSearch: %w", err)
+	}
+
+	pbl := NewPaginatedBookList(
+		books,
+		perPage,
+		page,
+		totalCount,
+	)
+
+	return pbl, nil
+}
+
 func (uc *BookShelf) ViewBook(ctx context.Context, bookID string) (entity.Book, error) {
 	book, err := uc.repo.GetById(ctx, bookID)
 	if err != nil {
@@ -122,27 +150,41 @@ func (uc *BookShelf) ViewBook(ctx context.Context, bookID string) (entity.Book, 
 }
 
 func (uc *BookShelf) UpdateBookMetadata(ctx context.Context, bookID string, metadata entity.Book) (entity.Book, error) {
-	book, err := uc.repo.GetById(ctx, bookID)
-	if err != nil {
-		return entity.Book{}, fmt.Errorf("BookShelf - UpdateBookMetadata - s.repo.Get: %w", err)
-	}
+    book, err := uc.repo.GetById(ctx, bookID)
+    if err != nil {
+        return entity.Book{}, fmt.Errorf("BookShelf - UpdateBookMetadata - s.repo.Get: %w", err)
+    }
 
-	updatedBook := entity.Book{
-		ID:        book.ID,
-		Title:     utils.If(metadata.Title == "", book.Title, metadata.Title),
-		Author:    utils.If(metadata.Author == "", book.Author, metadata.Author),
-		Publisher: utils.If(metadata.Publisher == "", book.Publisher, metadata.Publisher),
-		Year:      utils.If(metadata.Year == 0, book.Year, metadata.Year),
-		ISBN:      utils.If(metadata.ISBN == "", book.ISBN, metadata.ISBN),
-		UpdatedAt: time.Now(),
-	}
+    // 创建一个包含所有原始字段的更新对象
+    updatedBook := book
+    
+    // 只更新传入了新值的字段
+    if metadata.Title != "" {
+        updatedBook.Title = metadata.Title
+    }
+    if metadata.Author != "" {
+        updatedBook.Author = metadata.Author
+    }
+    if metadata.Publisher != "" {
+        updatedBook.Publisher = metadata.Publisher
+    }
+    if metadata.Year != 0 {
+        updatedBook.Year = metadata.Year
+    }
+    
+    // 特殊处理：如果传入的ISBN是空字符串，表示明确要清空ISBN
+    if metadata.ISBN != "" || (metadata.ISBN == "" && book.ISBN != "") {
+        updatedBook.ISBN = metadata.ISBN
+    }
+    
+    updatedBook.UpdatedAt = time.Now()
 
-	err = uc.repo.Update(ctx, updatedBook)
-	if err != nil {
-		return entity.Book{}, fmt.Errorf("BookShelf - UpdateBookMetadata - s.repo.Update: %w", err)
-	}
+    err = uc.repo.Update(ctx, updatedBook)
+    if err != nil {
+        return entity.Book{}, fmt.Errorf("BookShelf - UpdateBookMetadata - s.repo.Update: %w", err)
+    }
 
-	return updatedBook, nil
+    return updatedBook, nil
 }
 
 func (uc *BookShelf) DownloadBook(ctx context.Context, bookID string) (entity.Book, *os.File, error) {

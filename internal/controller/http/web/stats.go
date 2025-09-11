@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/vanadium23/kompanion/internal/stats"
-	"github.com/vanadium23/kompanion/pkg/logger"
+	"github.com/banjuer/kompanion/internal/stats"
+	"github.com/banjuer/kompanion/pkg/logger"
 	charts "github.com/wcharczuk/go-chart/v2"
 )
 

@@ -14,12 +14,12 @@ import (
 	"github.com/foolin/goview"
 	"github.com/foolin/goview/supports/ginview"
 	"github.com/gin-gonic/gin"
-	"github.com/vanadium23/kompanion"
-	"github.com/vanadium23/kompanion/internal/auth"
-	"github.com/vanadium23/kompanion/internal/library"
-	"github.com/vanadium23/kompanion/internal/stats"
-	"github.com/vanadium23/kompanion/internal/sync"
-	"github.com/vanadium23/kompanion/pkg/logger"
+	"github.com/banjuer/kompanion"
+	"github.com/banjuer/kompanion/internal/auth"
+	"github.com/banjuer/kompanion/internal/library"
+	"github.com/banjuer/kompanion/internal/stats"
+	"github.com/banjuer/kompanion/internal/sync"
+	"github.com/banjuer/kompanion/pkg/logger"
 )
 
 func NewRouter(

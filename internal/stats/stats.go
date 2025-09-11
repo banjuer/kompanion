@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/vanadium23/kompanion/pkg/postgres"
+	"github.com/banjuer/kompanion/pkg/postgres"
 )
 
 const KOReaderFile = "statistics.sqlite3"

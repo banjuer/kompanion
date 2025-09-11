@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/vanadium23/kompanion/pkg/postgres"
+	"github.com/banjuer/kompanion/pkg/postgres"
 
 	_ "github.com/mattn/go-sqlite3"
 )

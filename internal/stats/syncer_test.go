@@ -7,8 +7,8 @@ import (
 
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
-	"github.com/vanadium23/kompanion/internal/stats"
-	"github.com/vanadium23/kompanion/pkg/postgres"
+	"github.com/banjuer/kompanion/internal/stats"
+	"github.com/banjuer/kompanion/pkg/postgres"
 )
 
 func TestSyncer(t *testing.T) {

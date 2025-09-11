@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vanadium23/kompanion/pkg/metadata"
+	"github.com/banjuer/kompanion/pkg/metadata"
 )
 
 const pathToTestDataFolder = "../../../test/test_data/books/"

@@ -9,19 +9,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/vanadium23/kompanion/config"
-	"github.com/vanadium23/kompanion/internal/auth"
-	"github.com/vanadium23/kompanion/internal/controller/http/opds"
-	v1 "github.com/vanadium23/kompanion/internal/controller/http/v1"
-	"github.com/vanadium23/kompanion/internal/controller/http/web"
-	"github.com/vanadium23/kompanion/internal/controller/http/webdav"
-	"github.com/vanadium23/kompanion/internal/library"
-	"github.com/vanadium23/kompanion/internal/stats"
-	"github.com/vanadium23/kompanion/internal/storage"
-	"github.com/vanadium23/kompanion/internal/sync"
-	"github.com/vanadium23/kompanion/pkg/httpserver"
-	"github.com/vanadium23/kompanion/pkg/logger"
-	"github.com/vanadium23/kompanion/pkg/postgres"
+	"github.com/banjuer/kompanion/config"
+	"github.com/banjuer/kompanion/internal/auth"
+	"github.com/banjuer/kompanion/internal/controller/http/opds"
+	v1 "github.com/banjuer/kompanion/internal/controller/http/v1"
+	"github.com/banjuer/kompanion/internal/controller/http/web"
+	"github.com/banjuer/kompanion/internal/controller/http/webdav"
+	"github.com/banjuer/kompanion/internal/library"
+	"github.com/banjuer/kompanion/internal/stats"
+	"github.com/banjuer/kompanion/internal/storage"
+	"github.com/banjuer/kompanion/internal/sync"
+	"github.com/banjuer/kompanion/pkg/httpserver"
+	"github.com/banjuer/kompanion/pkg/logger"
+	"github.com/banjuer/kompanion/pkg/postgres"
 )
 
 // Run creates objects via constructors.

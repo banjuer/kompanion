@@ -3,7 +3,7 @@ package storage
 import (
 	"errors"
 
-	"github.com/vanadium23/kompanion/pkg/postgres"
+	"github.com/banjuer/kompanion/pkg/postgres"
 )
 
 func NewStorage(storage_type, dir string, pg *postgres.Postgres) (Storage, error) {

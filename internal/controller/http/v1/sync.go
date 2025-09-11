@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/vanadium23/kompanion/internal/entity"
-	"github.com/vanadium23/kompanion/internal/sync"
-	"github.com/vanadium23/kompanion/pkg/logger"
+	"github.com/banjuer/kompanion/internal/entity"
+	"github.com/banjuer/kompanion/internal/sync"
+	"github.com/banjuer/kompanion/pkg/logger"
 )
 
 type syncRoutes struct {

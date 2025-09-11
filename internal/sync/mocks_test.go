@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	entity "github.com/vanadium23/kompanion/internal/entity"
+	entity "github.com/banjuer/kompanion/internal/entity"
 	gomock "github.com/golang/mock/gomock"
 )
 

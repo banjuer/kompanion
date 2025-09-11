@@ -30,3 +30,4 @@ bin/
 release/
 
 docker-compose-local.yml
+app

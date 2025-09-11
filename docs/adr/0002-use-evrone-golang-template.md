@@ -17,7 +17,7 @@ From the template, I need a solution for the following tasks:
 ## Decision
 
 The change that we're proposing or have agreed to implement:
-- Move kompanion to the template at https://github.com/vanadium23/kompanion
+- Move kompanion to the template at https://github.com/banjuer/kompanion
 
 ## Alternatives
 

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/pashagolub/pgxmock/v4"
-	"github.com/vanadium23/kompanion/internal/entity"
-	"github.com/vanadium23/kompanion/internal/sync"
-	"github.com/vanadium23/kompanion/pkg/postgres"
+	"github.com/banjuer/kompanion/internal/entity"
+	"github.com/banjuer/kompanion/internal/sync"
+	"github.com/banjuer/kompanion/pkg/postgres"
 )
 
 func TestProgressRepo_Store(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/vanadium23/kompanion/internal/storage"
+	"github.com/banjuer/kompanion/internal/storage"
 )
 
 func TestFilesystemStorage(t *testing.T) {

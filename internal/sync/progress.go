@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/vanadium23/kompanion/internal/entity"
+	"github.com/banjuer/kompanion/internal/entity"
 )
 
 // ProgressSyncUseCase -.

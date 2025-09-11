@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/vanadium23/kompanion/internal/entity"
-	"github.com/vanadium23/kompanion/pkg/postgres"
+	"github.com/banjuer/kompanion/internal/entity"
+	"github.com/banjuer/kompanion/pkg/postgres"
 )
 
 // BookDatabaseRepo -.
@@ -119,7 +119,92 @@ func (bdr *BookDatabaseRepo) List(ctx context.Context,
 		books = append(books, book)
 	}
 
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("BookDatabaseRepo - List - rows.Err: %w", err)
+	}
+
 	return books, nil
+}
+
+// Search
+func (bdr *BookDatabaseRepo) Search(ctx context.Context, query string, sortBy, sortOrder string, page, perPage int) ([]entity.Book, error) {
+	switch sortOrder {
+	case "asc", "desc":
+	default:
+		sortOrder = "desc"
+	}
+
+	switch sortBy {
+	case "title", "author", "publisher", "year", "created_at", "updated_at", "isbn":
+	default:
+		sortBy = "created_at"
+	}
+
+	if page <= 0 {
+		page = 1
+	}
+	if perPage <= 0 || perPage > 100 {
+		perPage = 25
+	}
+
+	// 准备搜索模式，使用ILIKE进行不区分大小写的模糊匹配
+	searchPattern := "%" + query + "%"
+
+	sql := fmt.Sprintf(`
+		SELECT 
+			id, title, author, publisher, year, created_at, updated_at, isbn, storage_file_path, koreader_partial_md5, storage_cover_path
+		FROM library_book
+		WHERE title ILIKE $1 
+		   OR author ILIKE $1 
+		   OR publisher ILIKE $1 
+		   OR isbn ILIKE $1
+		ORDER BY %s %s
+		LIMIT %d OFFSET %d
+	`, sortBy, sortOrder, perPage, (page-1)*perPage)
+
+	rows, err := bdr.Pool.Query(ctx, sql, searchPattern)
+	if err != nil {
+		return nil, fmt.Errorf("BookDatabaseRepo - Search - r.Pool.Query: %w", err)
+	}
+	defer rows.Close()
+
+	books := make([]entity.Book, 0)
+	for rows.Next() {
+		var book entity.Book
+		err = rows.Scan(&book.ID, &book.Title, &book.Author, &book.Publisher, &book.Year, &book.CreatedAt, &book.UpdatedAt, &book.ISBN, &book.FilePath, &book.DocumentID, &book.CoverPath)
+		if err != nil {
+			return nil, fmt.Errorf("BookDatabaseRepo - Search - rows.Scan: %w", err)
+		}
+		books = append(books, book)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("BookDatabaseRepo - Search - rows.Err: %w", err)
+	}
+
+	return books, nil
+}
+
+// CountSearch -. 计算搜索结果总数
+func (bdr *BookDatabaseRepo) CountSearch(ctx context.Context, query string) (int, error) {
+	searchPattern := "%" + query + "%"
+
+	sql := `
+		SELECT COUNT(*)
+		FROM library_book
+		WHERE title ILIKE $1 
+		   OR author ILIKE $1 
+		   OR publisher ILIKE $1 
+		   OR isbn ILIKE $1
+	`
+
+	var count int
+	err := bdr.Pool.QueryRow(ctx, sql, searchPattern).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("BookDatabaseRepo - CountSearch - r.Pool.QueryRow: %w", err)
+	}
+
+	return count, nil
 }
 
 // Get -. only select from database

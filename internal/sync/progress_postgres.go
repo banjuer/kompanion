@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/vanadium23/kompanion/internal/entity"
-	"github.com/vanadium23/kompanion/pkg/postgres"
+	"github.com/banjuer/kompanion/internal/entity"
+	"github.com/banjuer/kompanion/pkg/postgres"
 )
 
 // ProgressDatabaseRepo -.

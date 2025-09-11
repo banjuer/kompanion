@@ -5,12 +5,12 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/banjuer/kompanion/internal/entity"
+	"github.com/banjuer/kompanion/internal/library"
+	"github.com/banjuer/kompanion/internal/stats"
+	syncpkg "github.com/banjuer/kompanion/internal/sync"
+	"github.com/banjuer/kompanion/pkg/logger"
 	"github.com/gin-gonic/gin"
-	"github.com/vanadium23/kompanion/internal/entity"
-	"github.com/vanadium23/kompanion/internal/library"
-	"github.com/vanadium23/kompanion/internal/stats"
-	syncpkg "github.com/vanadium23/kompanion/internal/sync"
-	"github.com/vanadium23/kompanion/pkg/logger"
 )
 
 type booksRoutes struct {
@@ -40,7 +40,19 @@ func (r *booksRoutes) listBooks(c *gin.Context) {
 		}
 	}
 
-	books, err := r.shelf.ListBooks(c.Request.Context(), "created_at", "desc", page, perPage)
+	// 获取搜索查询参数
+	query := c.Query("q")
+
+	var books library.PaginatedBookList
+	var err error
+
+	// 根据是否有搜索查询来决定调用哪个方法
+	if query != "" {
+		books, err = r.shelf.SearchBooks(c.Request.Context(), query, "created_at", "desc", page, perPage)
+	} else {
+		books, err = r.shelf.ListBooks(c.Request.Context(), "created_at", "desc", page, perPage)
+	}
+
 	if err != nil {
 		c.HTML(500, "error", passStandartContext(c, gin.H{"error": err.Error()}))
 		return
@@ -66,6 +78,7 @@ func (r *booksRoutes) listBooks(c *gin.Context) {
 
 	c.HTML(200, "books", passStandartContext(c, gin.H{
 		"books": booksWithProgress,
+		"query": query, // 传递搜索查询到模板，以便在搜索框中显示
 		"pagination": gin.H{
 			"currentPage": page,
 			"perPage":     perPage,

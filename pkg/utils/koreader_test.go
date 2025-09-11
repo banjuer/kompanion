@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/vanadium23/kompanion/pkg/utils"
+	"github.com/banjuer/kompanion/pkg/utils"
 )
 
 func TestPartialMd5(t *testing.T) {
