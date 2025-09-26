@@ -44,3 +44,63 @@
     flex-grow: 1;
     margin-top: 0;
 }
+
+/* Responsive design enhancements */
+@media screen and (max-width: 768px) {
+    /* Mobile-friendly navigation */
+    .header table {
+        width: 100%;
+    }
+    
+    .header table tr {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    
+    .header table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Stack book cards vertically on mobile */
+    .book-card {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .book-cover {
+        width: 8rem;
+    }
+    
+    .book-info {
+        text-align: center;
+    }
+    
+    /* Mobile-friendly book view layout */
+    .book-view {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .cover {
+        max-width: 200px;
+        margin-bottom: 1rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    /* Further adjustments for very small screens */
+    .header table td {
+        font-size: 0.8rem;
+        padding: 0.25rem;
+    }
+    
+    .book-cover {
+        width: 6rem;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+}
