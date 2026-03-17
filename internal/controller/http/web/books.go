@@ -33,10 +33,20 @@ func newBooksRoutes(handler *gin.RouterGroup, shelf library.Shelf, stats stats.R
 
 func (r *booksRoutes) listBooks(c *gin.Context) {
 	page := 1
-	perPage := 12 // Show 12 books per page for grid layout
+	perPage := 10 // Default 10 books per page
 	if pageStr := c.Query("page"); pageStr != "" {
 		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
 			page = p
+		}
+	}
+	if perPageStr := c.Query("perPage"); perPageStr != "" {
+		if pp, err := strconv.Atoi(perPageStr); err == nil && pp > 0 {
+			// Limit perPage to reasonable values
+			if pp <= 100 {
+				perPage = pp
+			} else {
+				perPage = 100
+			}
 		}
 	}
 

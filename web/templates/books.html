@@ -11,13 +11,32 @@
 </div>
 
 <div style="margin: 1rem 0;">
-    <form method="get" action="/books" class="grid">
+    <form method="get" action="/books" class="grid" id="search-form">
         <div style="flex-grow: 1;">
             <input type="text" name="q" placeholder="query books..." value="{{ .query }}" style="width: 100%; padding: 0.5rem;">
         </div>
+        <input type="hidden" name="perPage" value="{{ .pagination.perPage }}">
         <button style="margin-left: 0.5rem;">Query</button>
     </form>
 </div>
+
+{{ with .pagination }}
+<div class="pagination-info">
+    <div>
+        Showing {{ .perPage }} items per page | Page {{ .currentPage }} of {{ .totalPages }}
+    </div>
+    <div class="pagination-size-selector">
+        <label for="per-page">Items per page:</label>
+        <select id="per-page" name="perPage" onchange="changePerPage(this.value)">
+            <option value="10" {{ if eq .perPage 10 }}selected{{ end }}>10</option>
+            <option value="20" {{ if eq .perPage 20 }}selected{{ end }}>20</option>
+            <option value="50" {{ if eq .perPage 50 }}selected{{ end }}>50</option>
+            <option value="100" {{ if eq .perPage 100 }}selected{{ end }}>100</option>
+        </select>
+    </div>
+</div>
+{{ end }}
+
 <section>
     {{ range .books }}
     <!-- Another example -->
@@ -43,32 +62,41 @@
 {{ with .pagination }}
 <nav class="pagination" role="navigation" aria-label="pagination">
     {{ if .hasPrev }}
-    <a href="?page={{ .prevPage }}" class="pagination-prev">Previous</a>
-    {{ end }}
-
-    {{ if .hasNext }}
-    <a href="?page={{ .nextPage }}" class="pagination-next">Next</a>
+    <a href="?page={{ .prevPage }}&perPage={{ .perPage }}{{ if $.query }}&q={{ $.query }}{{ end }}" class="pagination-prev">Previous</a>
     {{ end }}
 
     <ul class="pagination-list">
         {{ if gt .currentPage 1 }}
-        <li><a href="?page=1" class="pagination-link" aria-label="Goto page 1">1</a></li>
+        <li><a href="?page=1&perPage={{ .perPage }}{{ if $.query }}&q={{ $.query }}{{ end }}" class="pagination-link" aria-label="Goto page 1">1</a></li>
         {{ if gt .currentPage 2 }}
         <li><span class="pagination-ellipsis">&hellip;</span></li>
         {{ end }}
         {{ end }}
 
-        <li><a href="?page={{ .currentPage }}" class="pagination-link is-current" aria-label="Page {{ .currentPage }}"
+        <li><a href="?page={{ .currentPage }}&perPage={{ .perPage }}{{ if $.query }}&q={{ $.query }}{{ end }}" class="pagination-link is-current" aria-label="Page {{ .currentPage }}"
                 aria-current="page">{{ .currentPage }}</a></li>
 
         {{ if lt .currentPage .totalPages }}
         {{ if lt .currentPage (subtract .totalPages 1) }}
         <li><span class="pagination-ellipsis">&hellip;</span></li>
         {{ end }}
-        <li><a href="?page={{ .totalPages }}" class="pagination-link" aria-label="Goto page {{ .totalPages }}">{{
+        <li><a href="?page={{ .totalPages }}&perPage={{ .perPage }}{{ if $.query }}&q={{ $.query }}{{ end }}" class="pagination-link" aria-label="Goto page {{ .totalPages }}">{{
                 .totalPages }}</a></li>
         {{ end }}
     </ul>
+
+    {{ if .hasNext }}
+    <a href="?page={{ .nextPage }}&perPage={{ .perPage }}{{ if $.query }}&q={{ $.query }}{{ end }}" class="pagination-next">Next</a>
+    {{ end }}
 </nav>
 {{ end }}
+
+<script>
+function changePerPage(perPage) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('perPage', perPage);
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+}
+</script>
 {{ end }}
