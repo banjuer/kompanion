@@ -1,3 +1,10 @@
+
+**本项目主要修改的点：**
+* 支持搜索
+* 打包arm镜像
+* 样式优化
+---
+
 # KOmpanion - bookshelf companion for KOreader
 
 KOmpanion is a minimalistic library web application, that tightly coupled to KOReader features.
