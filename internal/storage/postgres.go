@@ -35,6 +35,9 @@ func (ps *PostgresStorage) Write(
 	sql := `
 		INSERT INTO storage_blob (file_path, koreader_partial_md5, file_data)
 		VALUES ($1, $2, $3)
+		ON CONFLICT (file_path) DO UPDATE SET
+			koreader_partial_md5 = EXCLUDED.koreader_partial_md5,
+			file_data = EXCLUDED.file_data
 	`
 	args := []interface{}{filepath, md5Hash, data}
 
