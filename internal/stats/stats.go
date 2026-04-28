@@ -2,11 +2,14 @@ package stats
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
+	"github.com/banjuer/kompanion/internal/storage"
 	"github.com/banjuer/kompanion/pkg/postgres"
 )
 
@@ -14,11 +17,26 @@ const KOReaderFile = "statistics.sqlite3"
 
 // KOReaderPGStats implements ReadingStats interface
 type KOReaderPGStats struct {
+	st storage.Storage
+	rw sync.RWMutex
 	pg *postgres.Postgres
 }
 
-func NewKOReaderPGStats(pg *postgres.Postgres) *KOReaderPGStats {
-	return &KOReaderPGStats{pg: pg}
+func NewKOReaderPGStats(st storage.Storage, pg *postgres.Postgres) *KOReaderPGStats {
+	return &KOReaderPGStats{st: st, rw: sync.RWMutex{}, pg: pg}
+}
+
+func (s *KOReaderPGStats) Read(ctx context.Context) (*os.File, error) {
+	s.rw.RLock()
+	stats, err := s.st.Read(ctx, KOReaderFile)
+	s.rw.RUnlock()
+	if errors.Is(err, storage.ErrNotFound) {
+		return nil, ErrEmptyStats
+	}
+	if err != nil {
+		return nil, err
+	}
+	return stats, nil
 }
 
 func (s *KOReaderPGStats) Write(ctx context.Context, r io.ReadCloser, deviceName string) error {
@@ -31,6 +49,13 @@ func (s *KOReaderPGStats) Write(ctx context.Context, r io.ReadCloser, deviceName
 	defer tempFile.Close()
 
 	_, err = io.Copy(tempFile, r)
+	if err != nil {
+		return err
+	}
+
+	s.rw.Lock()
+	err = s.st.Write(ctx, tempFile.Name(), KOReaderFile)
+	s.rw.Unlock()
 	if err != nil {
 		return err
 	}
