@@ -17,6 +17,8 @@ type Metadata struct {
 	Language    string
 	Format      string
 	Cover       []byte
+	Series      string
+	SeriesIndex string
 }
 
 // ExtractBookMetadata extracts metadata from a book file

@@ -28,6 +28,13 @@
     margin: 0;
 }
 
+.form-row textarea {
+    flex: 1;
+    margin: 0;
+    font: inherit;
+    resize: vertical;
+}
+
 /* 登录表单样式 */
 .auth-form {
     max-width: 50ch;
@@ -88,6 +95,18 @@
 .book-info {
     flex-grow: 1;
     margin-top: 0;
+}
+
+.book-series {
+    font-style: italic;
+    opacity: 0.8;
+    margin: 0;
+}
+
+.book-description {
+    opacity: 0.7;
+    margin: 0.25rem 0 0 0;
+    font-size: 0.9em;
 }
 
 /* Responsive design enhancements */

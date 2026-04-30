@@ -9,6 +9,7 @@ import (
 	"github.com/banjuer/kompanion/internal/stats"
 	"github.com/banjuer/kompanion/pkg/logger"
 	charts "github.com/wcharczuk/go-chart/v2"
+	"github.com/wcharczuk/go-chart/v2"
 )
 
 func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
@@ -77,6 +78,9 @@ func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
 					StrokeColor: charts.GetDefaultColor(0),
 					StrokeWidth: 1,
 				},
+				NameStyle: charts.Style{
+					FontColor: chart.GetDefaultColor(0),
+				},
 				XValues: xValues,
 				YValues: yPagesValues,
 			},
@@ -85,6 +89,9 @@ func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
 				Style: charts.Style{
 					StrokeColor: charts.GetDefaultColor(1),
 					StrokeWidth: 2,
+				},
+				NameStyle: charts.Style{
+					FontColor: chart.GetDefaultColor(1),
 				},
 				XValues: xValues,
 				YValues: yDurationValues,
@@ -119,10 +126,10 @@ func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
 
 func newStatsRoutes(handler *gin.RouterGroup, stats stats.ReadingStats, l logger.Interface) {
 	handler.GET("/", func(c *gin.Context) {
-		// Get date range from query params, default to current month
 		now := time.Now()
-		from := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.Local)
-		to := from.AddDate(0, 1, 0).Add(-time.Second)
+		from := now.AddDate(0, -1, 0)
+		from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, time.Local)
+		to := from.AddDate(0, 1, 1).Add(-time.Second)
 
 		// Parse from and to dates if provided
 		if fromStr := c.Query("from"); fromStr != "" {
@@ -153,10 +160,10 @@ func newStatsRoutes(handler *gin.RouterGroup, stats stats.ReadingStats, l logger
 	})
 
 	handler.GET("/chart", func(c *gin.Context) {
-		// Get date range from query params, default to current month
 		now := time.Now()
-		from := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.Local)
-		to := from.AddDate(0, 1, 0).Add(-time.Second)
+		from := now.AddDate(0, -1, 0)
+		from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, time.Local)
+		to := from.AddDate(0, 1, 1).Add(-time.Second)
 
 		// Parse from and to dates if provided
 		if fromStr := c.Query("from"); fromStr != "" {

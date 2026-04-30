@@ -33,8 +33,12 @@ type EpubMetadata struct {
 		Language    string `xml:"language"`
 		Format      string `xml:"format"`
 		Meta        []struct {
-			Name    string `xml:"name,attr"`
-			Content string `xml:"content,attr"`
+			Name     string `xml:"name,attr"`
+			Content  string `xml:"content,attr"`
+			Property string `xml:"property,attr"`
+			Refines  string `xml:"refines,attr"`
+			ID       string `xml:"id,attr"`
+			Value    string `xml:",chardata"`
 		} `xml:"meta"`
 	} `xml:"metadata"`
 	Manifest struct {
@@ -76,6 +80,7 @@ func getEpubMetadata(tmpFile *os.File) (Metadata, error) {
 	}
 
 	cover := findEpubCover(reader, metadata)
+	series, seriesIndex := extractEpubSeries(metadata)
 
 	return Metadata{
 		ISBN:        metadata.Metadata.ISBN,
@@ -86,6 +91,8 @@ func getEpubMetadata(tmpFile *os.File) (Metadata, error) {
 		Publisher:   metadata.Metadata.Publisher,
 		Language:    metadata.Metadata.Language,
 		Cover:       cover,
+		Series:      series,
+		SeriesIndex: seriesIndex,
 	}, nil
 }
 
@@ -151,4 +158,42 @@ func unmarshalContainerXML(byteValue []byte) Container {
 	var container Container
 	xml.Unmarshal(byteValue, &container)
 	return container
+}
+
+func extractEpubSeries(metadata EpubMetadata) (string, string) {
+	var series string
+	var seriesIndex string
+	var collectionID string
+
+	for _, meta := range metadata.Metadata.Meta {
+		if meta.Property == "belongs-to-collection" {
+			series = meta.Value
+			if series == "" {
+				series = meta.Content
+			}
+			if meta.ID != "" {
+				collectionID = "#" + meta.ID
+			}
+		}
+		if meta.Name == "calibre:series" {
+			series = meta.Content
+		}
+		if meta.Name == "calibre:series_index" {
+			seriesIndex = meta.Content
+		}
+	}
+
+	if collectionID != "" && seriesIndex == "" {
+		for _, meta := range metadata.Metadata.Meta {
+			if meta.Refines == collectionID && meta.Property == "group-position" {
+				seriesIndex = meta.Value
+				if seriesIndex == "" {
+					seriesIndex = meta.Content
+				}
+				break
+			}
+		}
+	}
+
+	return series, seriesIndex
 }

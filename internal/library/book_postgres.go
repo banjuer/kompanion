@@ -2,36 +2,35 @@ package library
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
+	"github.com/shopspring/decimal"
 	"github.com/banjuer/kompanion/internal/entity"
 	"github.com/banjuer/kompanion/pkg/postgres"
 )
 
-// BookDatabaseRepo -.
 type BookDatabaseRepo struct {
 	*postgres.Postgres
 }
 
-// New -.
 func NewBookDatabaseRepo(pg *postgres.Postgres) *BookDatabaseRepo {
 	return &BookDatabaseRepo{pg}
 }
 
-// Store -. only insert in database
 func (bdr *BookDatabaseRepo) Store(ctx context.Context, book entity.Book) error {
-	sql := `
-		INSERT INTO library_book (id, title, author, publisher, year, created_at, updated_at, isbn, storage_file_path, koreader_partial_md5, storage_cover_path)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+	query := `
+		INSERT INTO library_book (id, title, author, publisher, year, created_at, updated_at, isbn, storage_file_path, koreader_partial_md5, storage_cover_path, series, series_index, summary)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	`
 	args := []interface{}{
 		book.ID, book.Title, book.Author, book.Publisher, book.Year,
 		book.CreatedAt, book.UpdatedAt, book.ISBN, book.FilePath,
-		book.DocumentID, book.CoverPath,
+		book.DocumentID, book.CoverPath, book.Series, book.SeriesIndex, book.Description,
 	}
 
-	_, err := bdr.Pool.Exec(ctx, sql, args...)
+	_, err := bdr.Pool.Exec(ctx, query, args...)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
 			return fmt.Errorf("BookDatabaseRepo - Store - r.Pool.Exec: %w", entity.ErrBookAlreadyExists)
@@ -42,24 +41,26 @@ func (bdr *BookDatabaseRepo) Store(ctx context.Context, book entity.Book) error 
 	return nil
 }
 
-// Update -. only update in database
 func (bdr *BookDatabaseRepo) Update(ctx context.Context, book entity.Book) error {
-	sql := `
+	query := `
 		UPDATE library_book
 		SET title = $1,
 			author = $2,
 			publisher = $3,
 			year = $4,
 			updated_at = $5,
-			isbn = $6
-		WHERE id = $7
+			isbn = $6,
+			series = $7,
+			series_index = $8,
+			summary = $9
+		WHERE id = $10
 	`
 	args := []interface{}{
 		book.Title, book.Author, book.Publisher, book.Year,
-		book.UpdatedAt, book.ISBN, book.ID,
+		book.UpdatedAt, book.ISBN, book.Series, book.SeriesIndex, book.Description, book.ID,
 	}
 
-	rows, err := bdr.Pool.Exec(ctx, sql, args...)
+	rows, err := bdr.Pool.Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("BookDatabaseRepo - Update - r.Pool.Exec: %w", err)
 	}
@@ -69,7 +70,6 @@ func (bdr *BookDatabaseRepo) Update(ctx context.Context, book entity.Book) error
 	return nil
 }
 
-// List -. only select from database
 func (bdr *BookDatabaseRepo) List(ctx context.Context,
 	sortBy, sortOrder string,
 	page, perPage int,
@@ -93,17 +93,15 @@ func (bdr *BookDatabaseRepo) List(ctx context.Context,
 		perPage = 25
 	}
 
-	// Use limit and offset for pagination, because we don't have a lot of books
-	// (yes, it's not the best way to do pagination)
-	sql := fmt.Sprintf(`
-		SELECT 
-			id, title, author, publisher, year, created_at, updated_at, isbn, storage_file_path, koreader_partial_md5, storage_cover_path
+	query := fmt.Sprintf(`
+		SELECT
+			id, title, author, publisher, year, created_at, updated_at, isbn, storage_file_path, koreader_partial_md5, storage_cover_path, series, series_index, summary
 		FROM library_book
 		ORDER BY %s %s
 		LIMIT %d OFFSET %d
 	`, sortBy, sortOrder, perPage, (page-1)*perPage)
 
-	rows, err := bdr.Pool.Query(ctx, sql)
+	rows, err := bdr.Pool.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("BookDatabaseRepo - List - r.Pool.Query: %w", err)
 	}
@@ -112,21 +110,44 @@ func (bdr *BookDatabaseRepo) List(ctx context.Context,
 	books := make([]entity.Book, 0)
 	for rows.Next() {
 		var book entity.Book
-		err = rows.Scan(&book.ID, &book.Title, &book.Author, &book.Publisher, &book.Year, &book.CreatedAt, &book.UpdatedAt, &book.ISBN, &book.FilePath, &book.DocumentID, &book.CoverPath)
+		var seriesIndex decimal.NullDecimal
+		var summary sql.NullString
+		var author sql.NullString
+		var publisher sql.NullString
+		var isbn sql.NullString
+		var coverPath sql.NullString
+		var series sql.NullString
+		err = rows.Scan(&book.ID, &book.Title, &author, &publisher, &book.Year, &book.CreatedAt, &book.UpdatedAt, &isbn, &book.FilePath, &book.DocumentID, &coverPath, &series, &seriesIndex, &summary)
 		if err != nil {
 			return nil, fmt.Errorf("BookDatabaseRepo - List - rows.Scan: %w", err)
 		}
+		if seriesIndex.Valid {
+			book.SeriesIndex = &seriesIndex
+		}
+		if summary.Valid {
+			book.Description = summary.String
+		}
+		if author.Valid {
+			book.Author = author.String
+		}
+		if publisher.Valid {
+			book.Publisher = publisher.String
+		}
+		if isbn.Valid {
+			book.ISBN = isbn.String
+		}
+		if coverPath.Valid {
+			book.CoverPath = coverPath.String
+		}
+		if series.Valid {
+			book.Series = series.String
+		}
 		books = append(books, book)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("BookDatabaseRepo - List - rows.Err: %w", err)
 	}
 
 	return books, nil
 }
 
-// Search
 func (bdr *BookDatabaseRepo) Search(ctx context.Context, query string, sortBy, sortOrder string, page, perPage int) ([]entity.Book, error) {
 	switch sortOrder {
 	case "asc", "desc":
@@ -147,16 +168,15 @@ func (bdr *BookDatabaseRepo) Search(ctx context.Context, query string, sortBy, s
 		perPage = 25
 	}
 
-	// 准备搜索模式，使用ILIKE进行不区分大小写的模糊匹配
 	searchPattern := "%" + query + "%"
 
 	sql := fmt.Sprintf(`
-		SELECT 
-			id, title, author, publisher, year, created_at, updated_at, isbn, storage_file_path, koreader_partial_md5, storage_cover_path
+		SELECT
+			id, title, author, publisher, year, created_at, updated_at, isbn, storage_file_path, koreader_partial_md5, storage_cover_path, series, series_index, summary
 		FROM library_book
-		WHERE title ILIKE $1 
-		   OR author ILIKE $1 
-		   OR publisher ILIKE $1 
+		WHERE title ILIKE $1
+		   OR author ILIKE $1
+		   OR publisher ILIKE $1
 		   OR isbn ILIKE $1
 		ORDER BY %s %s
 		LIMIT %d OFFSET %d
@@ -171,30 +191,53 @@ func (bdr *BookDatabaseRepo) Search(ctx context.Context, query string, sortBy, s
 	books := make([]entity.Book, 0)
 	for rows.Next() {
 		var book entity.Book
-		err = rows.Scan(&book.ID, &book.Title, &book.Author, &book.Publisher, &book.Year, &book.CreatedAt, &book.UpdatedAt, &book.ISBN, &book.FilePath, &book.DocumentID, &book.CoverPath)
+		var seriesIndex decimal.NullDecimal
+		var summary sql.NullString
+		var author sql.NullString
+		var publisher sql.NullString
+		var isbn sql.NullString
+		var coverPath sql.NullString
+		var series sql.NullString
+		err = rows.Scan(&book.ID, &book.Title, &author, &publisher, &book.Year, &book.CreatedAt, &book.UpdatedAt, &isbn, &book.FilePath, &book.DocumentID, &coverPath, &series, &seriesIndex, &summary)
 		if err != nil {
 			return nil, fmt.Errorf("BookDatabaseRepo - Search - rows.Scan: %w", err)
 		}
+		if seriesIndex.Valid {
+			book.SeriesIndex = &seriesIndex
+		}
+		if summary.Valid {
+			book.Description = summary.String
+		}
+		if author.Valid {
+			book.Author = author.String
+		}
+		if publisher.Valid {
+			book.Publisher = publisher.String
+		}
+		if isbn.Valid {
+			book.ISBN = isbn.String
+		}
+		if coverPath.Valid {
+			book.CoverPath = coverPath.String
+		}
+		if series.Valid {
+			book.Series = series.String
+		}
 		books = append(books, book)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("BookDatabaseRepo - Search - rows.Err: %w", err)
 	}
 
 	return books, nil
 }
 
-// CountSearch -. 计算搜索结果总数
 func (bdr *BookDatabaseRepo) CountSearch(ctx context.Context, query string) (int, error) {
 	searchPattern := "%" + query + "%"
 
 	sql := `
 		SELECT COUNT(*)
 		FROM library_book
-		WHERE title ILIKE $1 
-		   OR author ILIKE $1 
-		   OR publisher ILIKE $1 
+		WHERE title ILIKE $1
+		   OR author ILIKE $1
+		   OR publisher ILIKE $1
 		   OR isbn ILIKE $1
 	`
 
@@ -207,45 +250,98 @@ func (bdr *BookDatabaseRepo) CountSearch(ctx context.Context, query string) (int
 	return count, nil
 }
 
-// Get -. only select from database
 func (bdr *BookDatabaseRepo) GetById(ctx context.Context, id string) (entity.Book, error) {
-	sql := `
-		SELECT id, title, author, publisher, year, created_at, updated_at, isbn, storage_file_path, koreader_partial_md5, storage_cover_path
+	query := `
+		SELECT id, title, author, publisher, year, created_at, updated_at, isbn, storage_file_path, koreader_partial_md5, storage_cover_path, series, series_index, summary
 		FROM library_book
 		WHERE id = $1
 	`
 	args := []interface{}{id}
 
-	row := bdr.Pool.QueryRow(ctx, sql, args...)
+	row := bdr.Pool.QueryRow(ctx, query, args...)
 	var book entity.Book
-	err := row.Scan(&book.ID, &book.Title, &book.Author, &book.Publisher, &book.Year, &book.CreatedAt, &book.UpdatedAt, &book.ISBN, &book.FilePath, &book.DocumentID, &book.CoverPath)
+	var seriesIndex decimal.NullDecimal
+	var summary sql.NullString
+	var author sql.NullString
+	var publisher sql.NullString
+	var isbn sql.NullString
+	var coverPath sql.NullString
+	var series sql.NullString
+	err := row.Scan(&book.ID, &book.Title, &author, &publisher, &book.Year, &book.CreatedAt, &book.UpdatedAt, &isbn, &book.FilePath, &book.DocumentID, &coverPath, &series, &seriesIndex, &summary)
 	if err != nil {
 		return entity.Book{}, fmt.Errorf("BookDatabaseRepo - Get - r.Pool.QueryRow: %w", err)
+	}
+	if seriesIndex.Valid {
+		book.SeriesIndex = &seriesIndex
+	}
+	if summary.Valid {
+		book.Description = summary.String
+	}
+	if author.Valid {
+		book.Author = author.String
+	}
+	if publisher.Valid {
+		book.Publisher = publisher.String
+	}
+	if isbn.Valid {
+		book.ISBN = isbn.String
+	}
+	if coverPath.Valid {
+		book.CoverPath = coverPath.String
+	}
+	if series.Valid {
+		book.Series = series.String
 	}
 
 	return book, nil
 }
 
-// GetByFileHash -. only select from database
 func (bdr *BookDatabaseRepo) GetByFileHash(ctx context.Context, fileHash string) (entity.Book, error) {
-	sql := `
-		SELECT id, title, author, publisher, year, created_at, updated_at, isbn, storage_file_path, koreader_partial_md5, storage_cover_path
+	query := `
+		SELECT id, title, author, publisher, year, created_at, updated_at, isbn, storage_file_path, koreader_partial_md5, storage_cover_path, series, series_index, summary
 		FROM library_book
 		WHERE koreader_partial_md5 = $1
 	`
 	args := []interface{}{fileHash}
 
-	row := bdr.Pool.QueryRow(ctx, sql, args...)
+	row := bdr.Pool.QueryRow(ctx, query, args...)
 	var book entity.Book
-	err := row.Scan(&book.ID, &book.Title, &book.Author, &book.Publisher, &book.Year, &book.CreatedAt, &book.UpdatedAt, &book.ISBN, &book.FilePath, &book.DocumentID, &book.CoverPath)
+	var seriesIndex decimal.NullDecimal
+	var summary sql.NullString
+	var author sql.NullString
+	var publisher sql.NullString
+	var isbn sql.NullString
+	var coverPath sql.NullString
+	var series sql.NullString
+	err := row.Scan(&book.ID, &book.Title, &author, &publisher, &book.Year, &book.CreatedAt, &book.UpdatedAt, &isbn, &book.FilePath, &book.DocumentID, &coverPath, &series, &seriesIndex, &summary)
 	if err != nil {
 		return entity.Book{}, fmt.Errorf("BookDatabaseRepo - GetByFileHash - r.Pool.QueryRow: %w", err)
+	}
+	if seriesIndex.Valid {
+		book.SeriesIndex = &seriesIndex
+	}
+	if summary.Valid {
+		book.Description = summary.String
+	}
+	if author.Valid {
+		book.Author = author.String
+	}
+	if publisher.Valid {
+		book.Publisher = publisher.String
+	}
+	if isbn.Valid {
+		book.ISBN = isbn.String
+	}
+	if coverPath.Valid {
+		book.CoverPath = coverPath.String
+	}
+	if series.Valid {
+		book.Series = series.String
 	}
 
 	return book, nil
 }
 
-// Count -. only select from database
 func (bdr *BookDatabaseRepo) Count(ctx context.Context) (int, error) {
 	sql := `SELECT count(*) FROM library_book`
 

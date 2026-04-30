@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/moroz/uuidv7-go"
+	"github.com/shopspring/decimal"
 
 	"github.com/banjuer/kompanion/internal/entity"
 	"github.com/banjuer/kompanion/internal/storage"
@@ -66,18 +67,27 @@ func (uc *BookShelf) StoreBook(ctx context.Context, tempFile *os.File, uploadedF
 	}
 
 	book := entity.Book{
-		ID:         bookID.String(),
-		Title:      m.Title,
-		Author:     m.Author,
-		Publisher:  m.Publisher,
-		Year:       0,
-		CreatedAt:  createDate,
-		UpdatedAt:  createDate,
-		ISBN:       m.ISBN,
-		DocumentID: koreaderPartialMD5,
-		FilePath:   storagepath,
-		Format:     m.Format,
-		CoverPath:  coverPath,
+		ID:          bookID.String(),
+		Title:       m.Title,
+		Author:      m.Author,
+		Description: m.Description,
+		Publisher:   m.Publisher,
+		Year:        0,
+		CreatedAt:   createDate,
+		UpdatedAt:   createDate,
+		ISBN:        m.ISBN,
+		DocumentID:  koreaderPartialMD5,
+		FilePath:    storagepath,
+		Format:      m.Format,
+		CoverPath:   coverPath,
+		Series:      m.Series,
+	}
+
+	if m.SeriesIndex != "" {
+		if d, err := decimal.NewFromString(m.SeriesIndex); err == nil {
+			seriesIndex := decimal.NewNullDecimal(d)
+			book.SeriesIndex = &seriesIndex
+		}
 	}
 
 	// place in database
@@ -150,41 +160,34 @@ func (uc *BookShelf) ViewBook(ctx context.Context, bookID string) (entity.Book, 
 }
 
 func (uc *BookShelf) UpdateBookMetadata(ctx context.Context, bookID string, metadata entity.Book) (entity.Book, error) {
-    book, err := uc.repo.GetById(ctx, bookID)
-    if err != nil {
-        return entity.Book{}, fmt.Errorf("BookShelf - UpdateBookMetadata - s.repo.Get: %w", err)
-    }
+	book, err := uc.repo.GetById(ctx, bookID)
+	if err != nil {
+		return entity.Book{}, fmt.Errorf("BookShelf - UpdateBookMetadata - s.repo.Get: %w", err)
+	}
 
-    // 创建一个包含所有原始字段的更新对象
-    updatedBook := book
-    
-    // 只更新传入了新值的字段
-    if metadata.Title != "" {
-        updatedBook.Title = metadata.Title
-    }
-    if metadata.Author != "" {
-        updatedBook.Author = metadata.Author
-    }
-    if metadata.Publisher != "" {
-        updatedBook.Publisher = metadata.Publisher
-    }
-    if metadata.Year != 0 {
-        updatedBook.Year = metadata.Year
-    }
-    
-    // 特殊处理：如果传入的ISBN是空字符串，表示明确要清空ISBN
-    if metadata.ISBN != "" || (metadata.ISBN == "" && book.ISBN != "") {
-        updatedBook.ISBN = metadata.ISBN
-    }
-    
-    updatedBook.UpdatedAt = time.Now()
+	updatedBook := entity.Book{
+		ID:          book.ID,
+		Title:       utils.If(metadata.Title == "", book.Title, metadata.Title),
+		Author:      utils.If(metadata.Author == "", book.Author, metadata.Author),
+		Description: utils.If(metadata.Description == "", book.Description, metadata.Description),
+		Publisher:   utils.If(metadata.Publisher == "", book.Publisher, metadata.Publisher),
+		Year:        utils.If(metadata.Year == 0, book.Year, metadata.Year),
+		ISBN:        utils.If(metadata.ISBN == "", book.ISBN, metadata.ISBN),
+		Series:      utils.If(metadata.Series == "", book.Series, metadata.Series),
+		SeriesIndex: metadata.SeriesIndex,
+		UpdatedAt:   time.Now(),
+	}
 
-    err = uc.repo.Update(ctx, updatedBook)
-    if err != nil {
-        return entity.Book{}, fmt.Errorf("BookShelf - UpdateBookMetadata - s.repo.Update: %w", err)
-    }
+	if metadata.SeriesIndex == nil {
+		updatedBook.SeriesIndex = book.SeriesIndex
+	}
 
-    return updatedBook, nil
+	err = uc.repo.Update(ctx, updatedBook)
+	if err != nil {
+		return entity.Book{}, fmt.Errorf("BookShelf - UpdateBookMetadata - s.repo.Update: %w", err)
+	}
+
+	return updatedBook, nil
 }
 
 func (uc *BookShelf) DownloadBook(ctx context.Context, bookID string) (entity.Book, *os.File, error) {
