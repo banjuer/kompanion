@@ -9,7 +9,6 @@ import (
 	"github.com/banjuer/kompanion/internal/stats"
 	"github.com/banjuer/kompanion/pkg/logger"
 	charts "github.com/wcharczuk/go-chart/v2"
-	"github.com/wcharczuk/go-chart/v2"
 )
 
 func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
@@ -78,9 +77,6 @@ func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
 					StrokeColor: charts.GetDefaultColor(0),
 					StrokeWidth: 1,
 				},
-				NameStyle: charts.Style{
-					FontColor: chart.GetDefaultColor(0),
-				},
 				XValues: xValues,
 				YValues: yPagesValues,
 			},
@@ -89,9 +85,6 @@ func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
 				Style: charts.Style{
 					StrokeColor: charts.GetDefaultColor(1),
 					StrokeWidth: 2,
-				},
-				NameStyle: charts.Style{
-					FontColor: chart.GetDefaultColor(1),
 				},
 				XValues: xValues,
 				YValues: yDurationValues,
