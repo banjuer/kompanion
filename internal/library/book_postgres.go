@@ -170,7 +170,7 @@ func (bdr *BookDatabaseRepo) Search(ctx context.Context, query string, sortBy, s
 
 	searchPattern := "%" + query + "%"
 
-	sql := fmt.Sprintf(`
+	sqlQuery := fmt.Sprintf(`
 		SELECT
 			id, title, author, publisher, year, created_at, updated_at, isbn, storage_file_path, koreader_partial_md5, storage_cover_path, series, series_index, summary
 		FROM library_book
@@ -182,7 +182,7 @@ func (bdr *BookDatabaseRepo) Search(ctx context.Context, query string, sortBy, s
 		LIMIT %d OFFSET %d
 	`, sortBy, sortOrder, perPage, (page-1)*perPage)
 
-	rows, err := bdr.Pool.Query(ctx, sql, searchPattern)
+	rows, err := bdr.Pool.Query(ctx, sqlQuery, searchPattern)
 	if err != nil {
 		return nil, fmt.Errorf("BookDatabaseRepo - Search - r.Pool.Query: %w", err)
 	}
@@ -232,7 +232,7 @@ func (bdr *BookDatabaseRepo) Search(ctx context.Context, query string, sortBy, s
 func (bdr *BookDatabaseRepo) CountSearch(ctx context.Context, query string) (int, error) {
 	searchPattern := "%" + query + "%"
 
-	sql := `
+	sqlQuery := `
 		SELECT COUNT(*)
 		FROM library_book
 		WHERE title ILIKE $1
@@ -242,7 +242,7 @@ func (bdr *BookDatabaseRepo) CountSearch(ctx context.Context, query string) (int
 	`
 
 	var count int
-	err := bdr.Pool.QueryRow(ctx, sql, searchPattern).Scan(&count)
+	err := bdr.Pool.QueryRow(ctx, sqlQuery, searchPattern).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("BookDatabaseRepo - CountSearch - r.Pool.QueryRow: %w", err)
 	}
@@ -343,9 +343,9 @@ func (bdr *BookDatabaseRepo) GetByFileHash(ctx context.Context, fileHash string)
 }
 
 func (bdr *BookDatabaseRepo) Count(ctx context.Context) (int, error) {
-	sql := `SELECT count(*) FROM library_book`
+	sqlQuery := `SELECT count(*) FROM library_book`
 
-	row := bdr.Pool.QueryRow(ctx, sql)
+	row := bdr.Pool.QueryRow(ctx, sqlQuery)
 	var count int
 	err := row.Scan(&count)
 	if err != nil {
