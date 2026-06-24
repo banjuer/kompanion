@@ -56,7 +56,22 @@
 }
 
 .auth-form button {
-    min-width: 12ch;
+	min-width: 12ch;
+}
+
+.button.danger {
+	background-color: #dc2626;
+	color: white;
+	border-color: #dc2626;
+}
+
+.button.danger:hover {
+	background-color: #b91c1c;
+	border-color: #b91c1c;
+}
+
+.button.danger:active {
+	transform: translate(2px, 2px);
 }
 
 .cover {
@@ -181,10 +196,15 @@
 
 .pagination-prev,
 .pagination-next {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: calc(var(--line-height) / 2) 1ch;
     border: var(--border-thickness) solid var(--text-color);
     text-decoration: none;
     white-space: nowrap;
+    min-height: calc(var(--line-height) + var(--border-thickness) * 2);
+    box-sizing: border-box;
 }
 
 .pagination-prev:hover,
@@ -214,6 +234,8 @@
     padding: calc(var(--line-height) / 2) 1ch;
     border: var(--border-thickness) solid var(--text-color);
     text-decoration: none;
+    min-height: calc(var(--line-height) + var(--border-thickness) * 2);
+    box-sizing: border-box;
 }
 
 .pagination-link:hover {
@@ -227,7 +249,12 @@
 }
 
 .pagination-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: calc(var(--line-height) / 2) 0.5ch;
+    min-height: calc(var(--line-height) + var(--border-thickness) * 2);
+    box-sizing: border-box;
 }
 
 /* 分页大小选择器 */

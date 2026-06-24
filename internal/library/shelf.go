@@ -217,6 +217,34 @@ func (uc *BookShelf) ViewCover(ctx context.Context, bookID string) (*os.File, er
 	return file, nil
 }
 
+func (uc *BookShelf) DeleteBook(ctx context.Context, bookID string) error {
+	book, err := uc.repo.GetById(ctx, bookID)
+	if err != nil {
+		return fmt.Errorf("BookShelf - DeleteBook - s.repo.GetById: %w", err)
+	}
+
+	err = uc.repo.Delete(ctx, bookID)
+	if err != nil {
+		return fmt.Errorf("BookShelf - DeleteBook - s.repo.Delete: %w", err)
+	}
+
+	if book.FilePath != "" {
+		err = uc.storage.Delete(ctx, book.FilePath)
+		if err != nil {
+			uc.logger.Warn("BookShelf - DeleteBook - failed to delete book file: %s", err)
+		}
+	}
+
+	if book.CoverPath != "" {
+		err = uc.storage.Delete(ctx, book.CoverPath)
+		if err != nil {
+			uc.logger.Warn("BookShelf - DeleteBook - failed to delete cover file: %s", err)
+		}
+	}
+
+	return nil
+}
+
 func writeCover(
 	ctx context.Context,
 	storage storage.Storage,

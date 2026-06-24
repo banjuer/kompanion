@@ -52,9 +52,11 @@ func basicAuth(auth auth.AuthInterface) gin.HandlerFunc {
 			return
 		}
 		if !auth.CheckDevicePassword(c.Request.Context(), username, password, true) {
-			c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized", "code": 2001})
-			c.Abort()
-			return
+			if !auth.CheckPassword(c.Request.Context(), username, password) {
+				c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized", "code": 2001})
+				c.Abort()
+				return
+			}
 		}
 		c.Set("device_name", username)
 		c.Next()

@@ -48,6 +48,7 @@
                 <button type="submit" class="button success">Save</button>
                 <button type="button" class="button"><a href="/books/{{.ID}}/download"
                         target="_blank">Download</a></button>
+                <button type="button" class="button danger" onclick="deleteBook('{{.ID}}')">Delete</button>
             </div>
         </form>
     </div>
@@ -83,4 +84,30 @@
     </table>
 </section>
 {{ end }}
+
+<script>
+function deleteBook(bookId) {
+    if (confirm('Are you sure you want to delete this book? This action cannot be undone.')) {
+        fetch('/books/' + bookId, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-Token': getCSRFToken()
+            }
+        }).then(function(response) {
+            if (response.ok) {
+                window.location.href = '/books';
+            } else {
+                alert('Failed to delete book.');
+            }
+        }).catch(function(error) {
+            alert('Error deleting book: ' + error.message);
+        });
+    }
+}
+
+function getCSRFToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+</script>
 {{ end }}

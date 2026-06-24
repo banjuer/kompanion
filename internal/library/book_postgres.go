@@ -354,3 +354,18 @@ func (bdr *BookDatabaseRepo) Count(ctx context.Context) (int, error) {
 
 	return count, nil
 }
+
+func (bdr *BookDatabaseRepo) Delete(ctx context.Context, id string) error {
+	query := `
+		DELETE FROM library_book
+		WHERE id = $1
+	`
+	args := []interface{}{id}
+
+	_, err := bdr.Pool.Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("BookDatabaseRepo - Delete - r.Pool.Exec: %w", err)
+	}
+
+	return nil
+}
