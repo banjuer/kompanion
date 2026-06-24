@@ -60,14 +60,13 @@
 }
 
 .button.danger {
-	background-color: #dc2626;
-	color: white;
+	background-color: transparent;
+	color: #dc2626;
 	border-color: #dc2626;
 }
 
 .button.danger:hover {
-	background-color: #b91c1c;
-	border-color: #b91c1c;
+	background-color: rgba(220, 38, 38, 0.1);
 }
 
 .button.danger:active {
@@ -194,6 +193,10 @@
     flex-wrap: wrap;
 }
 
+.pagination > * {
+    margin-top: 0;
+}
+
 .pagination-prev,
 .pagination-next {
     display: inline-flex;
@@ -203,7 +206,7 @@
     border: var(--border-thickness) solid var(--text-color);
     text-decoration: none;
     white-space: nowrap;
-    min-height: calc(var(--line-height) + var(--border-thickness) * 2);
+    height: calc(var(--line-height) * 2);
     box-sizing: border-box;
 }
 
@@ -221,6 +224,10 @@
     margin: 0;
 }
 
+.pagination-list > * {
+    margin-top: 0;
+}
+
 .pagination-list li {
     margin: 0;
     padding: 0;
@@ -234,7 +241,7 @@
     padding: calc(var(--line-height) / 2) 1ch;
     border: var(--border-thickness) solid var(--text-color);
     text-decoration: none;
-    min-height: calc(var(--line-height) + var(--border-thickness) * 2);
+    height: calc(var(--line-height) * 2);
     box-sizing: border-box;
 }
 
@@ -253,7 +260,7 @@
     align-items: center;
     justify-content: center;
     padding: calc(var(--line-height) / 2) 0.5ch;
-    min-height: calc(var(--line-height) + var(--border-thickness) * 2);
+    height: calc(var(--line-height) * 2);
     box-sizing: border-box;
 }
 
