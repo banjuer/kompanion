@@ -31,3 +31,6 @@ release/
 
 docker-compose-local.yml
 app
+
+# IDE settings
+.arts/

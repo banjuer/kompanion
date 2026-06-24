@@ -83,6 +83,40 @@
     height: auto;
 }
 
+.cover-container {
+    position: relative;
+}
+
+.replace-cover-btn {
+    display: block;
+    width: 100%;
+    margin-top: calc(var(--line-height) * 0.5);
+    padding: calc(var(--line-height) / 3) 1ch;
+    font-size: 0.85em;
+    border: var(--border-thickness) solid var(--text-color);
+    background: var(--background-color);
+    color: var(--text-color);
+    font: inherit;
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    cursor: pointer;
+    height: auto;
+    line-height: var(--line-height);
+}
+
+.replace-cover-btn:hover {
+    background: var(--background-color-alt);
+}
+
+.replace-cover-btn:active {
+    transform: translate(2px, 2px);
+}
+
+.replace-cover-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* books */
 .book-card {
     display: flex;
@@ -329,4 +363,120 @@
     .auth-form button {
         width: 100%;
     }
+}
+
+/* Custom Modal Dialog */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-dialog {
+    width: 100%;
+    max-width: 50ch;
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-1rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-content {
+    background: var(--background-color);
+    color: var(--text-color);
+    border: var(--border-thickness) solid var(--text-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: calc(var(--line-height) - var(--border-thickness)) 1ch;
+    border-bottom: var(--border-thickness) solid var(--text-color);
+    font-weight: var(--font-weight-bold);
+    text-transform: uppercase;
+}
+
+.modal-title {
+    font-size: 1rem;
+}
+
+.modal-body {
+    padding: calc(var(--line-height) * 1.5) 1ch;
+}
+
+.modal-body p {
+    margin: 0;
+    line-height: var(--line-height);
+}
+
+.modal-footer {
+    padding: calc(var(--line-height) - var(--border-thickness)) 1ch;
+    border-top: var(--border-thickness) solid var(--text-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1ch;
+}
+
+.modal-footer .button {
+    margin: 0;
+    min-width: 10ch;
+}
+
+.modal-btn-ok {
+    background: var(--text-color);
+    color: var(--background-color);
+}
+
+.modal-btn-ok:hover {
+    background: var(--text-color-alt);
+}
+
+/* Date range quick select */
+.date-range-selector {
+    margin-bottom: calc(var(--line-height) * 0.5);
+}
+
+.date-range-radios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5ch;
+    margin-bottom: var(--line-height);
+}
+
+.date-range-radios label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5ch;
+    width: auto;
+    margin: 0;
+    font-weight: var(--font-weight-normal);
+    cursor: pointer;
+}
+
+.date-range-radios input[type="radio"] {
+    margin: 0;
+}
+
+.date-range-inputs {
+    display: none;
+}
+
+.date-range-inputs.is-visible {
+    display: block;
 }

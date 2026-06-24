@@ -217,6 +217,42 @@ func (uc *BookShelf) ViewCover(ctx context.Context, bookID string) (*os.File, er
 	return file, nil
 }
 
+func (uc *BookShelf) UpdateCover(ctx context.Context, bookID string, coverFile *os.File) (entity.Book, error) {
+	book, err := uc.repo.GetById(ctx, bookID)
+	if err != nil {
+		return entity.Book{}, fmt.Errorf("BookShelf - UpdateCover - s.repo.GetById: %w", err)
+	}
+
+	oldCoverPath := book.CoverPath
+
+	coverBytes, err := os.ReadFile(coverFile.Name())
+	if err != nil {
+		return entity.Book{}, fmt.Errorf("BookShelf - UpdateCover - os.ReadFile: %w", err)
+	}
+
+	newCoverPath, err := writeCover(ctx, uc.storage, coverBytes, bookID)
+	if err != nil {
+		return entity.Book{}, fmt.Errorf("BookShelf - UpdateCover - writeCover: %w", err)
+	}
+
+	book.CoverPath = newCoverPath
+	book.UpdatedAt = time.Now()
+
+	err = uc.repo.Update(ctx, book)
+	if err != nil {
+		return entity.Book{}, fmt.Errorf("BookShelf - UpdateCover - s.repo.Update: %w", err)
+	}
+
+	if oldCoverPath != "" && oldCoverPath != newCoverPath {
+		err = uc.storage.Delete(ctx, oldCoverPath)
+		if err != nil {
+			uc.logger.Warn("BookShelf - UpdateCover - failed to delete old cover: %s", err)
+		}
+	}
+
+	return book, nil
+}
+
 func (uc *BookShelf) DeleteBook(ctx context.Context, bookID string) error {
 	book, err := uc.repo.GetById(ctx, bookID)
 	if err != nil {

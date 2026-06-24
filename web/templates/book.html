@@ -5,7 +5,13 @@
 <article class="edit-book-article">
     <!-- Обложка книги -->
     <div class="cover">
-        <img src="/books/{{.ID}}/cover" alt="{{.Title}} - {{.Author}}">
+        <div class="cover-container">
+            <img id="book-cover-img" src="/books/{{.ID}}/cover" alt="{{.Title}} - {{.Author}}">
+            <button type="button" class="replace-cover-btn" onclick="document.getElementById('cover-file-input').click()">
+                Replace Cover
+            </button>
+            <input type="file" id="cover-file-input" accept="image/*" style="display: none;" onchange="uploadCover('{{.ID}}')">
+        </div>
     </div>
 
 
@@ -87,7 +93,8 @@
 
 <script>
 function deleteBook(bookId) {
-    if (confirm('Are you sure you want to delete this book? This action cannot be undone.')) {
+    showConfirm('Are you sure you want to delete this book? This action cannot be undone.', 'Delete Book', function(confirmed) {
+        if (!confirmed) return;
         fetch('/books/' + bookId, {
             method: 'DELETE',
             headers: {
@@ -97,17 +104,52 @@ function deleteBook(bookId) {
             if (response.ok) {
                 window.location.href = '/books';
             } else {
-                alert('Failed to delete book.');
+                showAlert('Failed to delete book.', 'Error');
             }
         }).catch(function(error) {
-            alert('Error deleting book: ' + error.message);
+            showAlert('Error deleting book: ' + error.message, 'Error');
         });
-    }
+    });
 }
 
 function getCSRFToken() {
     var meta = document.querySelector('meta[name="csrf-token"]');
     return meta ? meta.getAttribute('content') : '';
+}
+
+function uploadCover(bookId) {
+    var fileInput = document.getElementById('cover-file-input');
+    if (!fileInput.files || fileInput.files.length === 0) return;
+
+    var file = fileInput.files[0];
+    var formData = new FormData();
+    formData.append('cover', file);
+
+    var coverImg = document.getElementById('book-cover-img');
+    var replaceBtn = document.querySelector('.replace-cover-btn');
+    var originalText = replaceBtn.textContent;
+
+    replaceBtn.textContent = 'Uploading...';
+    replaceBtn.disabled = true;
+
+    fetch('/books/' + bookId + '/cover', {
+        method: 'POST',
+        body: formData
+    }).then(function(response) {
+        if (response.ok) {
+            var timestamp = new Date().getTime();
+            coverImg.src = '/books/' + bookId + '/cover?t=' + timestamp;
+            showAlert('Cover updated successfully.', 'Success');
+        } else {
+            showAlert('Failed to update cover.', 'Error');
+        }
+    }).catch(function(error) {
+        showAlert('Error uploading cover: ' + error.message, 'Error');
+    }).finally(function() {
+        replaceBtn.textContent = originalText;
+        replaceBtn.disabled = false;
+        fileInput.value = '';
+    });
 }
 </script>
 {{ end }}

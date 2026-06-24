@@ -30,6 +30,7 @@ func newBooksRoutes(handler *gin.RouterGroup, shelf library.Shelf, stats stats.R
 	handler.DELETE("/:bookID", r.deleteBook)
 	handler.GET("/:bookID/download", r.downloadBook)
 	handler.GET("/:bookID/cover", r.viewBookCover)
+	handler.POST("/:bookID/cover", r.uploadBookCover)
 }
 
 func (r *booksRoutes) listBooks(c *gin.Context) {
@@ -226,6 +227,41 @@ func (r *booksRoutes) viewBookCover(c *gin.Context) {
 		return
 	}
 	c.File(cover.Name())
+}
+
+func (r *booksRoutes) uploadBookCover(c *gin.Context) {
+	bookID := c.Param("bookID")
+
+	coverFile, err := c.FormFile("cover")
+	if err != nil {
+		r.logger.Error(err, "http - web - books - uploadBookCover - missing cover file")
+		c.JSON(400, gin.H{"message": "cover file is required"})
+		return
+	}
+
+	tempFile, err := os.CreateTemp("", "cover-")
+	if err != nil {
+		r.logger.Error(err, "http - web - books - uploadBookCover - create temp")
+		c.JSON(500, gin.H{"message": "internal server error"})
+		return
+	}
+	defer os.Remove(tempFile.Name())
+	defer tempFile.Close()
+
+	if err := c.SaveUploadedFile(coverFile, tempFile.Name()); err != nil {
+		r.logger.Error(err, "http - web - books - uploadBookCover - save uploaded")
+		c.JSON(500, gin.H{"message": "internal server error"})
+		return
+	}
+
+	_, err = r.shelf.UpdateCover(c.Request.Context(), bookID, tempFile)
+	if err != nil {
+		r.logger.Error(err, "http - web - books - uploadBookCover - UpdateCover")
+		c.JSON(500, gin.H{"message": "internal server error"})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "cover updated successfully"})
 }
 
 func (r *booksRoutes) deleteBook(c *gin.Context) {

@@ -34,9 +34,8 @@
                 <tr>
                     <td>{{.Name}}</td>
                     <td>
-                        <form action="/devices/deactivate/{{.Name}}" method="POST">
-                            <button type="submit"
-                                onclick="return confirm('Are you sure you want to deactivate this device?')">
+                        <form action="/devices/deactivate/{{.Name}}" method="POST" onsubmit="return handleDeactivate(event, '{{.Name}}')">
+                            <button type="submit">
                                 Deactivate
                             </button>
                         </form>
@@ -50,4 +49,17 @@
         {{end}}
     </section>
 </main>
+
+<script>
+function handleDeactivate(event, deviceName) {
+    event.preventDefault();
+    var form = event.target;
+    showConfirm('Are you sure you want to deactivate this device?', 'Deactivate Device', function(confirmed) {
+        if (confirmed) {
+            form.submit();
+        }
+    });
+    return false;
+}
+</script>
 {{end}}
