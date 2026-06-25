@@ -11,19 +11,19 @@ import (
 	charts "github.com/wcharczuk/go-chart/v2"
 )
 
-func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
-	if len(stats) == 0 {
+func generateDailyStatsChart(dailyStats []stats.DailyStats) ([]byte, error) {
+	if len(dailyStats) == 0 {
 		now := time.Now()
-		stats = []stats.DailyStats{
+		dailyStats = []stats.DailyStats{
 			{Date: now, PageCount: 0, AvgDurationPerPage: 0},
 		}
 	}
 
-	xValues := make([]float64, len(stats))
-	yPagesValues := make([]float64, len(stats))
-	yDurationValues := make([]float64, len(stats))
+	xValues := make([]float64, len(dailyStats))
+	yPagesValues := make([]float64, len(dailyStats))
+	yDurationValues := make([]float64, len(dailyStats))
 
-	for i, stat := range stats {
+	for i, stat := range dailyStats {
 		xValues[i] = float64(stat.Date.Unix())
 		yPagesValues[i] = float64(stat.PageCount)
 		yDurationValues[i] = float64(int(stat.AvgDurationPerPage))
@@ -31,7 +31,7 @@ func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
 
 	maxPages := 0.0
 	maxDuration := 0.0
-	for i := range stats {
+	for i := range dailyStats {
 		if yPagesValues[i] > maxPages {
 			maxPages = yPagesValues[i]
 		}
