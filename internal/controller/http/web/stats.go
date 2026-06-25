@@ -37,6 +37,13 @@ func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
 	maxPages = maxPages * 1.1
 	maxDuration = maxDuration * 1.1
 
+	if maxPages == 0.0 {
+		maxPages = 1.0
+	}
+	if maxDuration == 0.0 {
+		maxDuration = 1.0
+	}
+
 	// Create the chart
 	graph := charts.Chart{
 		Title: "",
@@ -120,9 +127,9 @@ func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
 func newStatsRoutes(handler *gin.RouterGroup, stats stats.ReadingStats, l logger.Interface) {
 	handler.GET("/", func(c *gin.Context) {
 		now := time.Now()
-		from := now.AddDate(0, -1, 0)
+		from := now.AddDate(0, -6, 0)
 		from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, time.Local)
-		to := from.AddDate(0, 1, 1).Add(-time.Second)
+		to := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.Local)
 
 		// Parse from and to dates if provided
 		if fromStr := c.Query("from"); fromStr != "" {
@@ -154,9 +161,9 @@ func newStatsRoutes(handler *gin.RouterGroup, stats stats.ReadingStats, l logger
 
 	handler.GET("/chart", func(c *gin.Context) {
 		now := time.Now()
-		from := now.AddDate(0, -1, 0)
+		from := now.AddDate(0, -6, 0)
 		from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, time.Local)
-		to := from.AddDate(0, 1, 1).Add(-time.Second)
+		to := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.Local)
 
 		// Parse from and to dates if provided
 		if fromStr := c.Query("from"); fromStr != "" {

@@ -9,6 +9,7 @@
     <section>
         <div class="date-range-selector">
             <div class="date-range-radios">
+                <label><input type="radio" name="dateRange" value="today"> Today</label>
                 <label><input type="radio" name="dateRange" value="yesterday"> Yesterday</label>
                 <label><input type="radio" name="dateRange" value="last7"> Last 7 days</label>
                 <label><input type="radio" name="dateRange" value="last30"> Last 30 days</label>
@@ -78,6 +79,11 @@
         return year + '-' + month + '-' + day;
     }
 
+    function getToday() {
+        var d = new Date();
+        return { from: formatDate(d), to: formatDate(d) };
+    }
+
     function getYesterday() {
         var d = new Date();
         d.setDate(d.getDate() - 1);
@@ -100,7 +106,8 @@
 
     function datesMatch(range) {
         var r;
-        if (range === 'yesterday') r = getYesterday();
+        if (range === 'today') r = getToday();
+        else if (range === 'yesterday') r = getYesterday();
         else if (range === 'last7') r = getLast7Days();
         else if (range === 'last30') r = getLast30Days();
         else return false;
@@ -108,6 +115,7 @@
     }
 
     function determineInitialRange() {
+        if (datesMatch('today')) return 'today';
         if (datesMatch('yesterday')) return 'yesterday';
         if (datesMatch('last7')) return 'last7';
         if (datesMatch('last30')) return 'last30';
@@ -149,7 +157,8 @@
 
             showDateInputs(false);
             var range;
-            if (value === 'yesterday') range = getYesterday();
+            if (value === 'today') range = getToday();
+            else if (value === 'yesterday') range = getYesterday();
             else if (value === 'last7') range = getLast7Days();
             else if (value === 'last30') range = getLast30Days();
 
