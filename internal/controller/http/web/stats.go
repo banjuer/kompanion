@@ -12,6 +12,13 @@ import (
 )
 
 func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
+	if len(stats) == 0 {
+		now := time.Now()
+		stats = []stats.DailyStats{
+			{Date: now, PageCount: 0, AvgDurationPerPage: 0},
+		}
+	}
+
 	xValues := make([]float64, len(stats))
 	yPagesValues := make([]float64, len(stats))
 	yDurationValues := make([]float64, len(stats))
@@ -22,7 +29,6 @@ func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
 		yDurationValues[i] = float64(int(stat.AvgDurationPerPage))
 	}
 
-	// Find max values for both Y axes
 	maxPages := 0.0
 	maxDuration := 0.0
 	for i := range stats {
@@ -33,7 +39,6 @@ func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
 			maxDuration = yDurationValues[i]
 		}
 	}
-	// Add 10% padding to max values
 	maxPages = maxPages * 1.1
 	maxDuration = maxDuration * 1.1
 
@@ -127,8 +132,7 @@ func generateDailyStatsChart(stats []stats.DailyStats) ([]byte, error) {
 func newStatsRoutes(handler *gin.RouterGroup, stats stats.ReadingStats, l logger.Interface) {
 	handler.GET("/", func(c *gin.Context) {
 		now := time.Now()
-		from := now.AddDate(0, -6, 0)
-		from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, time.Local)
+		from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 		to := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.Local)
 
 		// Parse from and to dates if provided
@@ -161,8 +165,7 @@ func newStatsRoutes(handler *gin.RouterGroup, stats stats.ReadingStats, l logger
 
 	handler.GET("/chart", func(c *gin.Context) {
 		now := time.Now()
-		from := now.AddDate(0, -6, 0)
-		from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, time.Local)
+		from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 		to := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.Local)
 
 		// Parse from and to dates if provided
