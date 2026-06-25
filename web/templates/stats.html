@@ -9,10 +9,9 @@
     <section>
         <div class="date-range-selector">
             <div class="date-range-radios">
-                <label><input type="radio" name="dateRange" value="today"> Today</label>
-                <label><input type="radio" name="dateRange" value="yesterday"> Yesterday</label>
                 <label><input type="radio" name="dateRange" value="last7"> Last 7 days</label>
                 <label><input type="radio" name="dateRange" value="last30"> Last 30 days</label>
+                <label><input type="radio" name="dateRange" value="last6months"> Last 6 months</label>
                 <label><input type="radio" name="dateRange" value="other" id="range-other"> Other</label>
             </div>
         </div>
@@ -79,17 +78,6 @@
         return year + '-' + month + '-' + day;
     }
 
-    function getToday() {
-        var d = new Date();
-        return { from: formatDate(d), to: formatDate(d) };
-    }
-
-    function getYesterday() {
-        var d = new Date();
-        d.setDate(d.getDate() - 1);
-        return { from: formatDate(d), to: formatDate(d) };
-    }
-
     function getLast7Days() {
         var to = new Date();
         var from = new Date();
@@ -104,21 +92,33 @@
         return { from: formatDate(from), to: formatDate(to) };
     }
 
+    function getLast6Months() {
+        var to = new Date();
+        var from = new Date();
+        from.setMonth(from.getMonth() - 6);
+        return { from: formatDate(from), to: formatDate(to) };
+    }
+
+    function getLastYear() {
+        var to = new Date();
+        var from = new Date();
+        from.setFullYear(from.getFullYear() - 1);
+        return { from: formatDate(from), to: formatDate(to) };
+    }
+
     function datesMatch(range) {
         var r;
-        if (range === 'today') r = getToday();
-        else if (range === 'yesterday') r = getYesterday();
-        else if (range === 'last7') r = getLast7Days();
+        if (range === 'last7') r = getLast7Days();
         else if (range === 'last30') r = getLast30Days();
+        else if (range === 'last6months') r = getLast6Months();
         else return false;
         return r.from === fromDate && r.to === toDate;
     }
 
     function determineInitialRange() {
-        if (datesMatch('today')) return 'today';
-        if (datesMatch('yesterday')) return 'yesterday';
         if (datesMatch('last7')) return 'last7';
         if (datesMatch('last30')) return 'last30';
+        if (datesMatch('last6months')) return 'last6months';
         return 'other';
     }
 
@@ -152,15 +152,16 @@
             var value = this.value;
             if (value === 'other') {
                 showDateInputs(true);
+                var lastYear = getLastYear();
+                setDateInputs(lastYear.from, lastYear.to);
                 return;
             }
 
             showDateInputs(false);
             var range;
-            if (value === 'today') range = getToday();
-            else if (value === 'yesterday') range = getYesterday();
-            else if (value === 'last7') range = getLast7Days();
+            if (value === 'last7') range = getLast7Days();
             else if (value === 'last30') range = getLast30Days();
+            else if (value === 'last6months') range = getLast6Months();
 
             if (range) {
                 setDateInputs(range.from, range.to);

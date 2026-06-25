@@ -141,7 +141,8 @@ func generateDailyStatsChart(data []stats.DailyStats) ([]byte, error) {
 func newStatsRoutes(handler *gin.RouterGroup, statsSvc stats.ReadingStats, l logger.Interface) {
 	handler.GET("/", func(c *gin.Context) {
 		now := time.Now()
-		from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+		from := now.AddDate(0, 0, -6)
+		from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, time.Local)
 		to := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.Local)
 
 		if fromStr := c.Query("from"); fromStr != "" {
@@ -173,7 +174,8 @@ func newStatsRoutes(handler *gin.RouterGroup, statsSvc stats.ReadingStats, l log
 
 	handler.GET("/chart", func(c *gin.Context) {
 		now := time.Now()
-		from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+		from := now.AddDate(0, 0, -6)
+		from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, time.Local)
 		to := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.Local)
 
 		if fromStr := c.Query("from"); fromStr != "" {
