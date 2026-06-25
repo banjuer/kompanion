@@ -11,19 +11,19 @@ import (
 	charts "github.com/wcharczuk/go-chart/v2"
 )
 
-func generateDailyStatsChart(dailyStats []stats.DailyStats) ([]byte, error) {
-	if len(dailyStats) == 0 {
+func generateDailyStatsChart(data []stats.DailyStats) ([]byte, error) {
+	if len(data) == 0 {
 		now := time.Now()
-		dailyStats = []stats.DailyStats{
+		data = []stats.DailyStats{
 			{Date: now, PageCount: 0, AvgDurationPerPage: 0},
 		}
 	}
 
-	xValues := make([]float64, len(dailyStats))
-	yPagesValues := make([]float64, len(dailyStats))
-	yDurationValues := make([]float64, len(dailyStats))
+	xValues := make([]float64, len(data))
+	yPagesValues := make([]float64, len(data))
+	yDurationValues := make([]float64, len(data))
 
-	for i, stat := range dailyStats {
+	for i, stat := range data {
 		xValues[i] = float64(stat.Date.Unix())
 		yPagesValues[i] = float64(stat.PageCount)
 		yDurationValues[i] = float64(int(stat.AvgDurationPerPage))
@@ -31,7 +31,7 @@ func generateDailyStatsChart(dailyStats []stats.DailyStats) ([]byte, error) {
 
 	maxPages := 0.0
 	maxDuration := 0.0
-	for i := range dailyStats {
+	for i := range data {
 		if yPagesValues[i] > maxPages {
 			maxPages = yPagesValues[i]
 		}
@@ -129,13 +129,12 @@ func generateDailyStatsChart(dailyStats []stats.DailyStats) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func newStatsRoutes(handler *gin.RouterGroup, stats stats.ReadingStats, l logger.Interface) {
+func newStatsRoutes(handler *gin.RouterGroup, statsSvc stats.ReadingStats, l logger.Interface) {
 	handler.GET("/", func(c *gin.Context) {
 		now := time.Now()
 		from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 		to := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.Local)
 
-		// Parse from and to dates if provided
 		if fromStr := c.Query("from"); fromStr != "" {
 			if parsedFrom, err := time.Parse("2006-01-02", fromStr); err == nil {
 				from = parsedFrom
@@ -147,7 +146,7 @@ func newStatsRoutes(handler *gin.RouterGroup, stats stats.ReadingStats, l logger
 			}
 		}
 
-		generalStats, err := stats.GetGeneralStats(c.Request.Context(), from, to)
+		generalStats, err := statsSvc.GetGeneralStats(c.Request.Context(), from, to)
 		if err != nil {
 			l.Error(err, "failed to get general stats")
 			c.HTML(500, "error", passStandartContext(c, gin.H{
@@ -168,7 +167,6 @@ func newStatsRoutes(handler *gin.RouterGroup, stats stats.ReadingStats, l logger
 		from := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 		to := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, time.Local)
 
-		// Parse from and to dates if provided
 		if fromStr := c.Query("from"); fromStr != "" {
 			if parsedFrom, err := time.Parse("2006-01-02", fromStr); err == nil {
 				from = parsedFrom
@@ -180,14 +178,14 @@ func newStatsRoutes(handler *gin.RouterGroup, stats stats.ReadingStats, l logger
 			}
 		}
 
-		dailyStats, err := stats.GetDailyStats(c.Request.Context(), from, to)
+		dailyStatsData, err := statsSvc.GetDailyStats(c.Request.Context(), from, to)
 		if err != nil {
 			l.Error(err, "failed to get daily stats")
 			c.Status(500)
 			return
 		}
 
-		chartBytes, err := generateDailyStatsChart(dailyStats)
+		chartBytes, err := generateDailyStatsChart(dailyStatsData)
 		if err != nil {
 			l.Error(err, "failed to generate chart")
 			c.Status(500)
