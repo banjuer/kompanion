@@ -19,6 +19,15 @@ func generateDailyStatsChart(data []stats.DailyStats) ([]byte, error) {
 		}
 	}
 
+	if len(data) == 1 {
+		yesterday := data[0].Date.Add(-24 * time.Hour)
+		data = append(data, stats.DailyStats{
+			Date:               yesterday,
+			PageCount:          0,
+			AvgDurationPerPage: 0,
+		})
+	}
+
 	xValues := make([]float64, len(data))
 	yPagesValues := make([]float64, len(data))
 	yDurationValues := make([]float64, len(data))
