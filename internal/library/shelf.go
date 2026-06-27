@@ -175,6 +175,7 @@ func (uc *BookShelf) UpdateBookMetadata(ctx context.Context, bookID string, meta
 		ISBN:        utils.If(metadata.ISBN == "", book.ISBN, metadata.ISBN),
 		Series:      utils.If(metadata.Series == "", book.Series, metadata.Series),
 		SeriesIndex: metadata.SeriesIndex,
+		CoverPath:   book.CoverPath,
 		UpdatedAt:   time.Now(),
 	}
 

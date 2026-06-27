@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/banjuer/kompanion/internal/entity"
 	"github.com/banjuer/kompanion/internal/library"
@@ -11,6 +12,7 @@ import (
 	syncpkg "github.com/banjuer/kompanion/internal/sync"
 	"github.com/banjuer/kompanion/pkg/logger"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 )
 
 type booksRoutes struct {
@@ -18,6 +20,47 @@ type booksRoutes struct {
 	stats    stats.ReadingStats
 	progress syncpkg.Progress
 	logger   logger.Interface
+}
+
+type bookMetadataForm struct {
+	Title       string `form:"title"`
+	Author      string `form:"author"`
+	Description string `form:"description"`
+	Publisher   string `form:"publisher"`
+	Year        string `form:"year"`
+	Series      string `form:"series"`
+	SeriesIndex string `form:"series_index"`
+	ISBN        string `form:"isbn"`
+}
+
+func (f bookMetadataForm) toBook() (entity.Book, error) {
+	var book entity.Book
+
+	book.Title = f.Title
+	book.Author = f.Author
+	book.Description = f.Description
+	book.Publisher = f.Publisher
+	book.Series = f.Series
+	book.ISBN = f.ISBN
+
+	if year := strings.TrimSpace(f.Year); year != "" {
+		parsedYear, err := strconv.Atoi(year)
+		if err != nil {
+			return entity.Book{}, fmt.Errorf("invalid year: %w", err)
+		}
+		book.Year = parsedYear
+	}
+
+	if seriesIndex := strings.TrimSpace(f.SeriesIndex); seriesIndex != "" {
+		parsedSeriesIndex, err := decimal.NewFromString(seriesIndex)
+		if err != nil {
+			return entity.Book{}, fmt.Errorf("invalid series index: %w", err)
+		}
+		nullSeriesIndex := decimal.NewNullDecimal(parsedSeriesIndex)
+		book.SeriesIndex = &nullSeriesIndex
+	}
+
+	return book, nil
 }
 
 func newBooksRoutes(handler *gin.RouterGroup, shelf library.Shelf, stats stats.ReadingStats, progress syncpkg.Progress, l logger.Interface) {
@@ -174,8 +217,16 @@ func (r *booksRoutes) viewBook(c *gin.Context) {
 func (r *booksRoutes) updateBookMetadata(c *gin.Context) {
 	bookID := c.Param("bookID")
 
-	var metadata entity.Book
-	if err := c.ShouldBind(&metadata); err != nil {
+	var form bookMetadataForm
+	if err := c.ShouldBind(&form); err != nil {
+		r.logger.Error(err, "http - v1 - shelf - updateBookMetadata")
+		// TODO: move to template
+		c.JSON(400, passStandartContext(c, gin.H{"message": "invalid request"}))
+		return
+	}
+
+	metadata, err := form.toBook()
+	if err != nil {
 		r.logger.Error(err, "http - v1 - shelf - updateBookMetadata")
 		// TODO: move to template
 		c.JSON(400, passStandartContext(c, gin.H{"message": "invalid request"}))

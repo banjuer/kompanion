@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/shopspring/decimal"
 	"github.com/banjuer/kompanion/internal/entity"
 	"github.com/banjuer/kompanion/pkg/postgres"
+	"github.com/shopspring/decimal"
 )
 
 type BookDatabaseRepo struct {
@@ -52,14 +52,13 @@ func (bdr *BookDatabaseRepo) Update(ctx context.Context, book entity.Book) error
 			isbn = $6,
 			series = $7,
 			series_index = $8,
-			summary = $9
-		WHERE id = $10
+			summary = $9,
+			storage_cover_path = $10
+		WHERE id = $11
 	`
 	args := []interface{}{
-		book.Title, book.Author, book.Publisher, book.Year,
-		book.UpdatedAt, book.ISBN, book.Series, book.SeriesIndex, book.Description, book.ID,
+		book.Title, book.Author, book.Publisher, book.Year, book.UpdatedAt, book.ISBN, book.Series, book.SeriesIndex, book.Description, book.CoverPath, book.ID,
 	}
-
 	rows, err := bdr.Pool.Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("BookDatabaseRepo - Update - r.Pool.Exec: %w", err)

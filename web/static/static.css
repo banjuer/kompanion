@@ -87,6 +87,21 @@
     position: relative;
 }
 
+.book-metadata {
+    flex: 1 1 80ch;
+    width: 100%;
+    min-width: 0;
+}
+
+.book-metadata form {
+    width: 100%;
+}
+
+.book-metadata .form-row textarea {
+    width: 100%;
+    min-height: calc(var(--line-height) * 8);
+}
+
 .replace-cover-btn {
     display: block;
     width: 100%;
