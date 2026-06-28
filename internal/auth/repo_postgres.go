@@ -110,12 +110,16 @@ func (r *UserDatabaseRepo) CreateDevice(ctx context.Context, device Device) erro
 			is_active = true,
 			deactivated_at = NULL,
 			updated_at = NOW()
+		WHERE auth_device.is_active = false
 	`
 	args := []interface{}{device.Name, device.HashedPassword}
 
-	_, err := r.Pool.Exec(ctx, sql, args...)
+	rows, err := r.Pool.Exec(ctx, sql, args...)
 	if err != nil {
 		return fmt.Errorf("UserDatabaseRepo - CreateDevice - r.Pool.Exec: %w", err)
+	}
+	if rows.RowsAffected() == 0 {
+		return fmt.Errorf("UserDatabaseRepo - CreateDevice - r.Pool.Exec: %w", DeviceAlreadyCreated)
 	}
 
 	return nil
