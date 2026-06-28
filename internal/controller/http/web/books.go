@@ -251,16 +251,21 @@ func (r *booksRoutes) updateBookMetadata(c *gin.Context) {
 func (r *booksRoutes) enrichBookMetadata(c *gin.Context) {
 	bookID := c.Param("bookID")
 
-	isbn := strings.TrimSpace(c.PostForm("isbn"))
-	if isbn != "" {
-		if _, err := r.shelf.UpdateBookMetadata(c.Request.Context(), bookID, entity.Book{ISBN: isbn}); err != nil {
-			r.logger.Error(err, "http - web - books - enrichBookMetadata - updateISBN")
-			c.String(500, "failed to update ISBN before fetching metadata")
-			return
-		}
+	var form bookMetadataForm
+	if err := c.ShouldBind(&form); err != nil {
+		r.logger.Error(err, "http - web - books - enrichBookMetadata - bind")
+		c.JSON(400, passStandartContext(c, gin.H{"message": "invalid request"}))
+		return
 	}
 
-	_, err := r.shelf.EnrichBookMetadata(c.Request.Context(), bookID)
+	metadata, err := form.toBook()
+	if err != nil {
+		r.logger.Error(err, "http - web - books - enrichBookMetadata - parse")
+		c.JSON(400, passStandartContext(c, gin.H{"message": "invalid request"}))
+		return
+	}
+
+	_, err = r.shelf.EnrichBookMetadataFromBase(c.Request.Context(), bookID, metadata)
 	if err != nil {
 		r.logger.Error(err, "http - web - books - enrichBookMetadata")
 		c.Redirect(303, "/books/"+bookID+"?metadata_error="+url.QueryEscape(err.Error()))

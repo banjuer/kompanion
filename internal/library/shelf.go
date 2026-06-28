@@ -209,23 +209,47 @@ func (uc *BookShelf) EnrichBookMetadata(ctx context.Context, bookID string) (ent
 	if err != nil {
 		return entity.Book{}, fmt.Errorf("BookShelf - EnrichBookMetadata - s.repo.Get: %w", err)
 	}
+
+	return uc.enrichAndStoreBookMetadata(ctx, book)
+}
+
+func (uc *BookShelf) EnrichBookMetadataFromBase(ctx context.Context, bookID string, metadata entity.Book) (entity.Book, error) {
+	book, err := uc.repo.GetById(ctx, bookID)
+	if err != nil {
+		return entity.Book{}, fmt.Errorf("BookShelf - EnrichBookMetadataFromBase - s.repo.Get: %w", err)
+	}
+
+	baseBook := book
+	baseBook.Title = metadata.Title
+	baseBook.Author = metadata.Author
+	baseBook.Description = metadata.Description
+	baseBook.Publisher = metadata.Publisher
+	baseBook.Year = metadata.Year
+	baseBook.ISBN = metadata.ISBN
+	baseBook.Series = metadata.Series
+	baseBook.SeriesIndex = metadata.SeriesIndex
+
+	return uc.enrichAndStoreBookMetadata(ctx, baseBook)
+}
+
+func (uc *BookShelf) enrichAndStoreBookMetadata(ctx context.Context, book entity.Book) (entity.Book, error) {
 	if book.ISBN == "" {
-		return entity.Book{}, fmt.Errorf("BookShelf - EnrichBookMetadata - isbn is empty")
+		return entity.Book{}, fmt.Errorf("BookShelf - enrichAndStoreBookMetadata - isbn is empty")
 	}
 	if uc.metadataProvider == nil {
-		return entity.Book{}, fmt.Errorf("BookShelf - EnrichBookMetadata - metadata provider is not configured")
+		return entity.Book{}, fmt.Errorf("BookShelf - enrichAndStoreBookMetadata - metadata provider is not configured")
 	}
 
 	lookup, err := uc.metadataProvider.LookupByISBN(ctx, book.ISBN)
 	if err != nil {
-		return entity.Book{}, fmt.Errorf("BookShelf - EnrichBookMetadata - provider.LookupByISBN: %w", err)
+		return entity.Book{}, fmt.Errorf("BookShelf - enrichAndStoreBookMetadata - provider.LookupByISBN: %w", err)
 	}
 
 	updatedBook := bookmeta.MergeMissingBookMetadata(book, lookup.Book)
 	if uc.bookNeedsCover(ctx, updatedBook) && len(lookup.Cover) > 0 {
-		coverPath, err := writeCover(ctx, uc.storage, lookup.Cover, bookID)
+		coverPath, err := writeCover(ctx, uc.storage, lookup.Cover, book.ID)
 		if err != nil {
-			return entity.Book{}, fmt.Errorf("BookShelf - EnrichBookMetadata - writeCover: %w", err)
+			return entity.Book{}, fmt.Errorf("BookShelf - enrichAndStoreBookMetadata - writeCover: %w", err)
 		}
 		updatedBook.CoverPath = coverPath
 	}
@@ -233,7 +257,7 @@ func (uc *BookShelf) EnrichBookMetadata(ctx context.Context, bookID string) (ent
 
 	err = uc.repo.Update(ctx, updatedBook)
 	if err != nil {
-		return entity.Book{}, fmt.Errorf("BookShelf - EnrichBookMetadata - s.repo.Update: %w", err)
+		return entity.Book{}, fmt.Errorf("BookShelf - enrichAndStoreBookMetadata - s.repo.Update: %w", err)
 	}
 
 	return updatedBook, nil

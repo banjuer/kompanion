@@ -112,6 +112,53 @@ func TestEnrichBookMetadataReplacesMissingCoverFile(t *testing.T) {
 	}
 }
 
+func TestEnrichBookMetadataFromBaseUsesSubmittedMetadata(t *testing.T) {
+	repo := &fakeBookRepo{
+		book: entity.Book{
+			ID:        "book-id",
+			Title:     "stored title",
+			Author:    "stored author",
+			ISBN:      "stored-isbn",
+			CoverPath: "covers/book-id.jpg",
+		},
+	}
+	provider := fakeMetadataProvider{
+		result: bookmeta.LookupResult{
+			Book: entity.Book{
+				Title:  "豆瓣标题",
+				Author: "豆瓣作者",
+				ISBN:   "9787108041531",
+			},
+		},
+	}
+	shelf := library.NewBookShelf(storage.NewMemoryStorage(), repo, logger.New("error"), provider)
+
+	book, err := shelf.EnrichBookMetadataFromBase(context.Background(), "book-id", entity.Book{
+		Title:  "",
+		Author: "submitted author",
+		ISBN:   "9787108041531",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if book.Title != "豆瓣标题" {
+		t.Fatalf("expected submitted empty title to be filled from douban, got %q", book.Title)
+	}
+	if book.Author != "submitted author" {
+		t.Fatalf("expected submitted non-empty author to be preserved, got %q", book.Author)
+	}
+	if book.ISBN != "9787108041531" {
+		t.Fatalf("expected submitted ISBN to be used, got %q", book.ISBN)
+	}
+	if repo.updated.Title != "豆瓣标题" {
+		t.Fatalf("expected enriched submitted metadata to be stored, got %+v", repo.updated)
+	}
+	if repo.updated.CoverPath != "covers/book-id.jpg" {
+		t.Fatalf("expected cover path to be preserved, got %q", repo.updated.CoverPath)
+	}
+}
+
 type fakeBookRepo struct {
 	book    entity.Book
 	updated entity.Book
