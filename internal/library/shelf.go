@@ -10,6 +10,7 @@ import (
 	"github.com/moroz/uuidv7-go"
 	"github.com/shopspring/decimal"
 
+	"github.com/banjuer/kompanion/internal/bookmeta"
 	"github.com/banjuer/kompanion/internal/entity"
 	"github.com/banjuer/kompanion/internal/storage"
 	"github.com/banjuer/kompanion/pkg/logger"
@@ -19,17 +20,23 @@ import (
 
 // BookShelf 提供书籍管理操作
 type BookShelf struct {
-	storage storage.Storage
-	repo    BookRepo
-	logger  logger.Interface
+	storage          storage.Storage
+	repo             BookRepo
+	logger           logger.Interface
+	metadataProvider bookmeta.Provider
 }
 
 // NewBookShelf 创建BookShelf实例
-func NewBookShelf(storage storage.Storage, repo BookRepo, l logger.Interface) *BookShelf {
+func NewBookShelf(storage storage.Storage, repo BookRepo, l logger.Interface, providers ...bookmeta.Provider) *BookShelf {
+	var metadataProvider bookmeta.Provider
+	if len(providers) > 0 {
+		metadataProvider = providers[0]
+	}
 	return &BookShelf{
-		storage: storage,
-		repo:    repo,
-		logger:  l,
+		storage:          storage,
+		repo:             repo,
+		logger:           l,
+		metadataProvider: metadataProvider,
 	}
 }
 
@@ -61,11 +68,7 @@ func (uc *BookShelf) StoreBook(ctx context.Context, tempFile *os.File, uploadedF
 	}
 	uc.logger.Info("BookShelf - StoreBook - documentID: %s", koreaderPartialMD5)
 
-	coverPath, err := writeCover(ctx, uc.storage, m.Cover, bookID.String())
-	if err != nil {
-		uc.logger.Error("BookShelf - StoreBook - writeCover: %s", err)
-	}
-
+	coverBytes := m.Cover
 	book := entity.Book{
 		ID:          bookID.String(),
 		Title:       m.Title,
@@ -79,7 +82,6 @@ func (uc *BookShelf) StoreBook(ctx context.Context, tempFile *os.File, uploadedF
 		DocumentID:  koreaderPartialMD5,
 		FilePath:    storagepath,
 		Format:      m.Format,
-		CoverPath:   coverPath,
 		Series:      m.Series,
 	}
 
@@ -89,6 +91,17 @@ func (uc *BookShelf) StoreBook(ctx context.Context, tempFile *os.File, uploadedF
 			book.SeriesIndex = &seriesIndex
 		}
 	}
+
+	book, enrichedCover := uc.enrichBookMetadata(ctx, book)
+	if len(coverBytes) == 0 && len(enrichedCover) > 0 {
+		coverBytes = enrichedCover
+	}
+
+	coverPath, err := writeCover(ctx, uc.storage, coverBytes, bookID.String())
+	if err != nil {
+		uc.logger.Error("BookShelf - StoreBook - writeCover: %s", err)
+	}
+	book.CoverPath = coverPath
 
 	// place in database
 	err = uc.repo.Store(
@@ -189,6 +202,67 @@ func (uc *BookShelf) UpdateBookMetadata(ctx context.Context, bookID string, meta
 	}
 
 	return updatedBook, nil
+}
+
+func (uc *BookShelf) EnrichBookMetadata(ctx context.Context, bookID string) (entity.Book, error) {
+	book, err := uc.repo.GetById(ctx, bookID)
+	if err != nil {
+		return entity.Book{}, fmt.Errorf("BookShelf - EnrichBookMetadata - s.repo.Get: %w", err)
+	}
+	if book.ISBN == "" {
+		return entity.Book{}, fmt.Errorf("BookShelf - EnrichBookMetadata - isbn is empty")
+	}
+	if uc.metadataProvider == nil {
+		return entity.Book{}, fmt.Errorf("BookShelf - EnrichBookMetadata - metadata provider is not configured")
+	}
+
+	lookup, err := uc.metadataProvider.LookupByISBN(ctx, book.ISBN)
+	if err != nil {
+		return entity.Book{}, fmt.Errorf("BookShelf - EnrichBookMetadata - provider.LookupByISBN: %w", err)
+	}
+
+	updatedBook := bookmeta.MergeMissingBookMetadata(book, lookup.Book)
+	if uc.bookNeedsCover(ctx, updatedBook) && len(lookup.Cover) > 0 {
+		coverPath, err := writeCover(ctx, uc.storage, lookup.Cover, bookID)
+		if err != nil {
+			return entity.Book{}, fmt.Errorf("BookShelf - EnrichBookMetadata - writeCover: %w", err)
+		}
+		updatedBook.CoverPath = coverPath
+	}
+	updatedBook.UpdatedAt = time.Now()
+
+	err = uc.repo.Update(ctx, updatedBook)
+	if err != nil {
+		return entity.Book{}, fmt.Errorf("BookShelf - EnrichBookMetadata - s.repo.Update: %w", err)
+	}
+
+	return updatedBook, nil
+}
+
+func (uc *BookShelf) bookNeedsCover(ctx context.Context, book entity.Book) bool {
+	if book.CoverPath == "" {
+		return true
+	}
+	cover, err := uc.storage.Read(ctx, book.CoverPath)
+	if err != nil {
+		return true
+	}
+	_ = cover.Close()
+	return false
+}
+
+func (uc *BookShelf) enrichBookMetadata(ctx context.Context, book entity.Book) (entity.Book, []byte) {
+	if uc.metadataProvider == nil || book.ISBN == "" {
+		return book, nil
+	}
+
+	lookup, err := uc.metadataProvider.LookupByISBN(ctx, book.ISBN)
+	if err != nil {
+		uc.logger.Warn("BookShelf - enrichBookMetadata - provider.LookupByISBN: %s", err)
+		return book, nil
+	}
+
+	return bookmeta.MergeMissingBookMetadata(book, lookup.Book), lookup.Cover
 }
 
 func (uc *BookShelf) DownloadBook(ctx context.Context, bookID string) (entity.Book, *os.File, error) {

@@ -16,6 +16,7 @@ type (
 		ViewBook(ctx context.Context, bookID string) (entity.Book, error)
 		DownloadBook(ctx context.Context, bookID string) (entity.Book, *os.File, error)
 		UpdateBookMetadata(ctx context.Context, bookID string, metadata entity.Book) (entity.Book, error)
+		EnrichBookMetadata(ctx context.Context, bookID string) (entity.Book, error)
 		ViewCover(ctx context.Context, bookID string) (*os.File, error)
 		UpdateCover(ctx context.Context, bookID string, coverFile *os.File) (entity.Book, error)
 		DeleteBook(ctx context.Context, bookID string) error

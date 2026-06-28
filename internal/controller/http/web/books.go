@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -70,6 +71,7 @@ func newBooksRoutes(handler *gin.RouterGroup, shelf library.Shelf, stats stats.R
 	handler.POST("/upload", r.uploadBook)
 	handler.GET("/:bookID", r.viewBook)
 	handler.POST("/:bookID", r.updateBookMetadata)
+	handler.POST("/:bookID/enrich", r.enrichBookMetadata)
 	handler.DELETE("/:bookID", r.deleteBook)
 	handler.GET("/:bookID/download", r.downloadBook)
 	handler.GET("/:bookID/cover", r.viewBookCover)
@@ -209,8 +211,9 @@ func (r *booksRoutes) viewBook(c *gin.Context) {
 	}
 
 	c.HTML(200, "book", passStandartContext(c, gin.H{
-		"book":  book,
-		"stats": bookStats,
+		"book":          book,
+		"stats":         bookStats,
+		"metadataError": c.Query("metadata_error"),
 	}))
 }
 
@@ -243,6 +246,28 @@ func (r *booksRoutes) updateBookMetadata(c *gin.Context) {
 
 	// TODO: why not redirect?
 	c.HTML(200, "book", passStandartContext(c, gin.H{"book": book}))
+}
+
+func (r *booksRoutes) enrichBookMetadata(c *gin.Context) {
+	bookID := c.Param("bookID")
+
+	isbn := strings.TrimSpace(c.PostForm("isbn"))
+	if isbn != "" {
+		if _, err := r.shelf.UpdateBookMetadata(c.Request.Context(), bookID, entity.Book{ISBN: isbn}); err != nil {
+			r.logger.Error(err, "http - web - books - enrichBookMetadata - updateISBN")
+			c.String(500, "failed to update ISBN before fetching metadata")
+			return
+		}
+	}
+
+	_, err := r.shelf.EnrichBookMetadata(c.Request.Context(), bookID)
+	if err != nil {
+		r.logger.Error(err, "http - web - books - enrichBookMetadata")
+		c.Redirect(303, "/books/"+bookID+"?metadata_error="+url.QueryEscape(err.Error()))
+		return
+	}
+
+	c.Redirect(302, "/books/"+bookID)
 }
 
 func (r *booksRoutes) viewBookCover(c *gin.Context) {

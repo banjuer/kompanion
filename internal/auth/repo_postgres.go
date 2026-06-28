@@ -105,6 +105,11 @@ func (r *UserDatabaseRepo) CreateDevice(ctx context.Context, device Device) erro
 	sql := `
 		INSERT INTO auth_device (device_name, hashed_password)
 		VALUES ($1, $2)
+		ON CONFLICT (device_name) DO UPDATE
+		SET hashed_password = EXCLUDED.hashed_password,
+			is_active = true,
+			deactivated_at = NULL,
+			updated_at = NOW()
 	`
 	args := []interface{}{device.Name, device.HashedPassword}
 
@@ -120,7 +125,7 @@ func (r *UserDatabaseRepo) GetDeviceByName(ctx context.Context, deviceName strin
 	sql := `
 		SELECT device_name, hashed_password
 		FROM auth_device
-		WHERE device_name = $1
+		WHERE device_name = $1 AND is_active = true
 	`
 	args := []interface{}{deviceName}
 
@@ -155,6 +160,8 @@ func (r *UserDatabaseRepo) ListDevices(ctx context.Context) ([]Device, error) {
 	sql := `
 		SELECT device_name, hashed_password
 		FROM auth_device
+		WHERE is_active = true
+		ORDER BY device_name
 	`
 
 	rows, err := r.Pool.Query(ctx, sql)

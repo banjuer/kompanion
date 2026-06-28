@@ -16,6 +16,7 @@ type (
 		Log
 		PG
 		BookStorage
+		Metadata
 	}
 
 	// App -.
@@ -51,6 +52,15 @@ type (
 		Type string
 		Path string
 	}
+
+	Metadata struct {
+		Provider            string
+		DoubanCookie        string
+		CookieCloudURL      string
+		CookieCloudUUID     string
+		CookieCloudPassword string
+		CookieCloudDomain   string
+	}
 )
 
 // NewConfig - reads from env, validates and returns the config.
@@ -80,6 +90,8 @@ func NewConfig(version string) (*Config, error) {
 		return nil, err
 	}
 
+	metadata := readMetadataConfig()
+
 	return &Config{
 		App: App{
 			Name:    "kompanion",
@@ -90,6 +102,7 @@ func NewConfig(version string) (*Config, error) {
 		Log:         log,
 		PG:          postgres,
 		BookStorage: bookStorage,
+		Metadata:    metadata,
 	}, nil
 }
 
@@ -169,6 +182,27 @@ func readBookStorageConfig() (BookStorage, error) {
 		Type: bstorage_type,
 		Path: bstorage_path,
 	}, nil
+}
+
+func readMetadataConfig() Metadata {
+	provider := readPrefixedEnv("METADATA_PROVIDER")
+	if provider == "" {
+		provider = "none"
+	}
+
+	domain := readPrefixedEnv("COOKIECLOUD_DOMAIN")
+	if domain == "" {
+		domain = "douban.com"
+	}
+
+	return Metadata{
+		Provider:            provider,
+		DoubanCookie:        readPrefixedEnv("DOUBAN_COOKIE"),
+		CookieCloudURL:      readPrefixedEnv("COOKIECLOUD_URL"),
+		CookieCloudUUID:     readPrefixedEnv("COOKIECLOUD_UUID"),
+		CookieCloudPassword: readPrefixedEnv("COOKIECLOUD_PASSWORD"),
+		CookieCloudDomain:   domain,
+	}
 }
 
 func readPrefixedEnv(key string) string {

@@ -17,6 +17,9 @@
 
     <!-- Форма для редактирования метаданных -->
     <div class="book-metadata">
+        {{ with $.metadataError }}
+        <p class="metadata-error">Metadata fetch failed: {{ . }}</p>
+        {{ end }}
         <form aria-labelledby="Редактирование книги" method="post">
             <div class="form-row">
                 <label for="title">Title</label>
@@ -29,6 +32,7 @@
             <div class="form-row">
                 <label for="isbn">ISBN</label>
                 <input type="text" id="isbn" name="isbn" placeholder="Enter ISBN" value="{{ .ISBN }}">
+                <button type="submit" class="button fetch-metadata-btn" formaction="/books/{{.ID}}/enrich" formmethod="post" formnovalidate>FETCH</button>
             </div>
             <div class="form-row">
                 <label for="series">Series</label>

@@ -102,6 +102,15 @@
     min-height: calc(var(--line-height) * 8);
 }
 
+.fetch-metadata-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.metadata-error {
+    color: var(--form-element-invalid-active-border-color);
+}
+
 .replace-cover-btn {
     display: block;
     width: 100%;

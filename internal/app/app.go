@@ -3,14 +3,18 @@ package app
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/banjuer/kompanion/config"
 	"github.com/banjuer/kompanion/internal/auth"
+	"github.com/banjuer/kompanion/internal/bookmeta"
 	"github.com/banjuer/kompanion/internal/controller/http/opds"
 	v1 "github.com/banjuer/kompanion/internal/controller/http/v1"
 	"github.com/banjuer/kompanion/internal/controller/http/web"
@@ -56,7 +60,8 @@ func Run(cfg *config.Config) {
 		cfg.Auth.Password,
 	)
 	progress := sync.NewProgressSync(sync.NewProgressDatabaseRepo(pg))
-	shelf := library.NewBookShelf(bookStorage, library.NewBookDatabaseRepo(pg), l)
+	metadataProvider := newMetadataProvider(cfg, l)
+	shelf := library.NewBookShelf(bookStorage, library.NewBookDatabaseRepo(pg), l, metadataProvider)
 	rs := stats.NewKOReaderPGStats(pg)
 
 	// HTTP Server
@@ -64,7 +69,7 @@ func Run(cfg *config.Config) {
 	web.NewRouter(handler, l, authService, progress, shelf, rs, cfg.Version)
 	v1.NewRouter(handler, l, authService, progress, shelf)
 	opds.NewRouter(handler, l, authService, progress, shelf)
-	webdav.NewRouter(handler, authService, l, rs)
+	webdav.NewRouter(handler, authService, l, rs, shelf)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal
@@ -83,4 +88,30 @@ func Run(cfg *config.Config) {
 	if err != nil {
 		l.Error(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err))
 	}
+}
+
+func newMetadataProvider(cfg *config.Config, l logger.Interface) bookmeta.Provider {
+	if strings.ToLower(cfg.Metadata.Provider) != "douban" {
+		return nil
+	}
+
+	var cookieSource bookmeta.CookieSource
+	switch {
+	case strings.TrimSpace(cfg.Metadata.DoubanCookie) != "":
+		cookieSource = bookmeta.NewStaticCookieSource(cfg.Metadata.DoubanCookie)
+	case cfg.Metadata.CookieCloudURL != "" && cfg.Metadata.CookieCloudUUID != "" && cfg.Metadata.CookieCloudPassword != "":
+		cookieSource = bookmeta.NewCookieCloudSource(
+			cfg.Metadata.CookieCloudURL,
+			cfg.Metadata.CookieCloudUUID,
+			cfg.Metadata.CookieCloudPassword,
+			&http.Client{Timeout: 8 * time.Second},
+		)
+	default:
+		l.Warn("app - Run - douban metadata provider enabled without cookie configuration")
+		return nil
+	}
+
+	provider := bookmeta.NewDoubanProvider(cookieSource, &http.Client{Timeout: 8 * time.Second})
+	provider.SetCookieDomain(cfg.Metadata.CookieCloudDomain)
+	return provider
 }

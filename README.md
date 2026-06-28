@@ -52,6 +52,34 @@ Features, that can buy you in:
 - `KOMPANION_PG_URL` - postgresql link
 - `KOMPANION_BSTORAGE_TYPE` - type of storage for books: postgres, memory, filesystem (default: postgres)
 - `KOMPANION_BSTORAGE_PATH` - path in case of filesystem
+- `KOMPANION_METADATA_PROVIDER` - external book metadata provider: none, douban (default: none)
+- `KOMPANION_DOUBAN_COOKIE` - Douban cookie used by the douban metadata provider; preferred when set
+- `KOMPANION_COOKIECLOUD_URL` - CookieCloud server URL used when `KOMPANION_DOUBAN_COOKIE` is empty
+- `KOMPANION_COOKIECLOUD_UUID` - CookieCloud UUID
+- `KOMPANION_COOKIECLOUD_PASSWORD` - CookieCloud password
+- `KOMPANION_COOKIECLOUD_DOMAIN` - CookieCloud domain filter for Douban cookies (default: douban.com)
+
+### Douban metadata enrichment
+
+Set `KOMPANION_METADATA_PROVIDER=douban` to enrich uploaded books by ISBN. When enabled, KOmpanion first extracts ISBN from the uploaded file, then fetches metadata from Douban and fills only missing fields.
+
+Cookie can be provided directly:
+
+```sh
+KOMPANION_METADATA_PROVIDER=douban \
+KOMPANION_DOUBAN_COOKIE='bid=...; dbcl2=...' \
+./kompanion
+```
+
+Or via CookieCloud:
+
+```sh
+KOMPANION_METADATA_PROVIDER=douban \
+KOMPANION_COOKIECLOUD_URL='https://cookiecloud.example.com' \
+KOMPANION_COOKIECLOUD_UUID='your-uuid' \
+KOMPANION_COOKIECLOUD_PASSWORD='your-password' \
+./kompanion
+```
 
 ## Usage
 
@@ -71,9 +99,10 @@ First of all, you need to add your devices:
 
 Go to following plugins:
 1. Cloud storage
-    1. Add new WebDAV: URL - `https://your-kompanion.org/webdav/`, username - device name, password - password
+    1. Add new WebDAV library: URL - `https://your-kompanion.org/webdav/books/`, username - device name, password - password
 2. Statistics - Settings - Cloud sync
-    1. It's OKAY to have empty list, just press on **Long press to choose current folder**.
+    1. Add WebDAV stats sync: URL - `https://your-kompanion.org/webdav/`, username - device name, password - password
+    2. It's OKAY to have empty list, just press on **Long press to choose current folder**.
 3. Open book - tools - Progress sync
     1. Custom sync server: `https://your-kompanion.org/`
     1. Login: username - device name, password - password
